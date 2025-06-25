@@ -152,7 +152,41 @@ export default function Home() {
     }
   };
 
-  // Leave room handler
+  // --- SESSION RECOVERY LOGIC ---
+  // On mount, try to recover session from localStorage
+  useEffect(() => {
+    const savedRoomId = localStorage.getItem("roomId");
+    const savedNickname = localStorage.getItem("nickname");
+    const savedLanguage = localStorage.getItem("language");
+    if (savedLanguage === "en" || savedLanguage === "de") setLanguage(savedLanguage);
+    if (savedRoomId && savedNickname) {
+      setRoomId(savedRoomId);
+      setRoomCode(savedRoomId);
+      setNickname(savedNickname);
+      setInput(savedRoomId);
+      setJoined(true);
+      setError("");
+      // Do NOT emit join here
+    }
+  }, []); // Only run on mount
+
+  // Emit join when socket, roomId, and nickname are all set
+  useEffect(() => {
+    if (socket && roomId && nickname && joined) {
+      socket.emit("join", { roomId, nickname });
+    }
+  }, [socket, roomId, nickname, joined]);
+
+  // Save session info on join/create
+  useEffect(() => {
+    if (joined && roomId && nickname) {
+      localStorage.setItem("roomId", roomId);
+      localStorage.setItem("nickname", nickname);
+      localStorage.setItem("language", language);
+    }
+  }, [joined, roomId, nickname, language]);
+
+  // Clear session info on leave
   const handleLeaveRoom = () => {
     if (socket && roomId) {
       socket.emit("leaveRoom", roomId);
@@ -173,6 +207,8 @@ export default function Home() {
       setAllClues([]);
       setVote("");
       setResults(null);
+      localStorage.removeItem("roomId");
+      localStorage.removeItem("nickname");
     }
   };
 
@@ -225,13 +261,8 @@ export default function Home() {
               >
                 {t('Create Room', 'Raum erstellen')}
               </button>
-              <button
-                className="bg-white text-red-700 border-2 border-red-400 px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-100 transition-all w-full text-lg"
-                onClick={() => setCreatingRoom(false)}
-              >
-                {t('Join Room', 'Raum beitreten')}
-              </button>
             </div>
+            <br></br>
             {creatingRoom && roomCode && (
               <div className="w-full flex flex-col items-center">
                 <label className="mb-2 text-red-700 font-semibold">{t('Max Room Size', 'Maximale Raumgröße')}</label>
