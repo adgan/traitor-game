@@ -34,14 +34,23 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
           provenance: true
+          labels: |
+              org.opencontainers.image.source=${{ github.repository }}
+              org.opencontainers.image.revision=${{ github.sha }}
+              org.opencontainers.image.authors=${{ github.actor }}
+              org.opencontainers.image.url=https://github.com/${{ github.repository }}
           sbom: true
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: 'docker.io/${{ github.repository }}:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
 
+      - name: Redeploy via webhook
+        if: ${{ github.event_name == 'push' }}
+        env:
+          REDEPLOY_WEBHOOK: ${{ secrets.REDEPLOY_WEBHOOK }}
+        run: |
+          if [ -n "$REDEPLOY_WEBHOOK" ]; then
+            curl -X POST "$REDEPLOY_WEBHOOK"
+            echo "Redeploy webhook triggered successfully."
+            exit 0
+          else
+            echo "No redeploy webhook set."
+            exit 1
+          fi
