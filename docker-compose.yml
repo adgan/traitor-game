@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000 # Change this to your desired port or override with .env
+    env_file:
+      - .env
+    restart: unless-stopped
+    # Uncomment if you want to persist node_modules cache between builds
+    # volumes:
+    #   - ./.next:/app/.next
+    #   - ./node_modules:/app/node_modules
