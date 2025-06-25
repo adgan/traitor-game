@@ -42,7 +42,6 @@ jobs:
           sbom: true
 
       - name: Redeploy via webhook
-        if: ${{ github.event_name == 'push' }}
         env:
           REDEPLOY_WEBHOOK: ${{ secrets.REDEPLOY_WEBHOOK }}
         run: |
