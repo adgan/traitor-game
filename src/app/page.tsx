@@ -1,8 +1,9 @@
 "use client";
 
 import { useSocket } from "./useSocket";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
+import Link from "next/link";
 
 export default function Home() {
   const [roomId, setRoomId] = useState("");
@@ -27,6 +28,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<'en' | 'de'>('en');
   const [players, setPlayers] = useState<string[]>([]);
+  const [lang, setLang] = useState("en");
 
   // Simple translation dictionary
   const t = (en: string, de: string) => (language === 'de' ? de : en);
@@ -223,12 +225,40 @@ export default function Home() {
     };
   }, [socket]);
 
+  useEffect(() => {
+    const detected = typeof window !== "undefined"
+      ? (localStorage.getItem("language") || navigator.language || "en").slice(0, 2)
+      : "en";
+    setLang(detected);
+    // Listen for language changes in localStorage (from other tabs or in-app changes)
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "language" && e.newValue) {
+        setLang(e.newValue.slice(0, 2));
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
+    setLang(language);
+  }, [language]);
+
+  const helpLabel = lang === "de" ? "Hilfe" : "Help";
+  const handleHelpClick = () => {
+    localStorage.setItem("language", language);
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-red-100 via-rose-200 to-red-300">
       <div className="bg-white/90 rounded-3xl shadow-2xl p-10 max-w-md w-full flex flex-col items-center border border-red-200">
         <h1 className="text-4xl font-extrabold mb-6 text-red-700 tracking-tight drop-shadow-md font-sans">
           Traitor Party Game
         </h1>
+        {/* Help link in top-right corner, translated */}
+        <div className="absolute top-4 right-4">
+          <Link href="/help" className="text-blue-600 hover:underline font-medium" onClick={handleHelpClick}>{helpLabel}</Link>
+        </div>
         {!joined ? (
           <>
             <div className="w-full flex justify-end mb-2">
