@@ -3,7 +3,7 @@ import type { NextApiRequest } from 'next';
 import type { NextApiResponseServerIO } from '@/types/next';
 
 // Store submitted words and players per room (persistent across requests)
-const roomWords: Record<string, { words: string[]; sockets: string[]; clues: string[]; clueTurn: number; cluePhase: boolean; votes: Record<string, string> }> = {};
+const roomWords: Record<string, { words: string[]; sockets: string[]; clues: string[]; clueTurn: number; cluePhase: boolean; votes: Record<string, string>; nicknames: Record<string, string>; maxRoomSize: number }> = {};
 
 export default function handler(req: NextApiRequest, res: NextApiResponseServerIO) {
   if (!res.socket.server.io) {
@@ -17,29 +17,44 @@ export default function handler(req: NextApiRequest, res: NextApiResponseServerI
     });
     res.socket.server.io = io;
     io.on('connection', (socket) => {
+      // Helper to emit player list to all in room
+      function emitPlayers(roomId: string) {
+        if (roomWords[roomId]) {
+          const players = roomWords[roomId].sockets.map(sid => roomWords[roomId].nicknames[sid] || '');
+          io.to(roomId).emit('players', { players });
+        }
+      }
+
       // Join room
-      socket.on('join', (roomId) => {
+      socket.on('join', ({ roomId, nickname }) => {
         if (!roomWords[roomId]) {
-          // Room does not exist, do not join
           socket.emit('roomError', { error: 'Room does not exist.' });
+          return;
+        }
+        if (roomWords[roomId].sockets.length >= roomWords[roomId].maxRoomSize) {
+          socket.emit('roomError', { error: 'Room is full.' });
           return;
         }
         socket.join(roomId);
         if (!roomWords[roomId].sockets.includes(socket.id)) {
           roomWords[roomId].sockets.push(socket.id);
+          roomWords[roomId].nicknames[socket.id] = nickname;
         }
         socket.emit('joined', roomId);
+        emitPlayers(roomId);
       });
       // Create room
-      socket.on('createRoom', (roomId) => {
+      socket.on('createRoom', ({ roomId, maxRoomSize, nickname }) => {
         if (!roomWords[roomId]) {
-          roomWords[roomId] = { words: [], sockets: [], clues: [], clueTurn: 0, cluePhase: false, votes: {} };
+          roomWords[roomId] = { words: [], sockets: [], clues: [], clueTurn: 0, cluePhase: false, votes: {}, nicknames: {}, maxRoomSize: maxRoomSize || 6 };
         }
         socket.join(roomId);
         if (!roomWords[roomId].sockets.includes(socket.id)) {
           roomWords[roomId].sockets.push(socket.id);
+          roomWords[roomId].nicknames[socket.id] = nickname;
         }
         socket.emit('joined', roomId);
+        emitPlayers(roomId);
       });
       // Handle word submission
       socket.on('submitWord', ({ roomId, word }) => {
@@ -110,6 +125,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponseServerI
           roomWords[roomId].words.splice(idx, 1);
           if (roomWords[roomId].clues) roomWords[roomId].clues.splice(idx, 1);
           if (roomWords[roomId].votes) delete roomWords[roomId].votes[socket.id];
+          if (roomWords[roomId].nicknames) delete roomWords[roomId].nicknames[socket.id];
+          emitPlayers(roomId);
         }
         socket.leave(roomId);
         socket.emit('leftRoom', roomId);
@@ -121,9 +138,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponseServerI
           if (idx !== -1) {
             roomWords[roomId].sockets.splice(idx, 1);
             roomWords[roomId].words.splice(idx, 1);
-            // Remove clues and votes if needed
             if (roomWords[roomId].clues) roomWords[roomId].clues.splice(idx, 1);
             if (roomWords[roomId].votes) delete roomWords[roomId].votes[socket.id];
+            if (roomWords[roomId].nicknames) delete roomWords[roomId].nicknames[socket.id];
+            emitPlayers(roomId);
           }
         });
       });

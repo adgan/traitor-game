@@ -22,36 +22,55 @@ export default function Home() {
   const [vote, setVote] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [roomCode, setRoomCode] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [maxRoomSize, setMaxRoomSize] = useState(6);
+  const [error, setError] = useState("");
+  const [language, setLanguage] = useState<'en' | 'de'>('en');
+  const [players, setPlayers] = useState<string[]>([]);
+
+  // Simple translation dictionary
+  const t = (en: string, de: string) => (language === 'de' ? de : en);
+
   // Use a proper type for results
   interface Results {
     votes: Record<string, string>;
     voteCounts: Record<string, number>;
   }
   const [results, setResults] = useState<Results | null>(null);
-  const { socket, connected, joined: socketJoined } = useSocket(roomId);
+  const { socket, connected, joined: socketJoined } = useSocket(roomId, nickname);
 
   // Generate a 5-digit room code
   const generateRoomCode = () => nanoid(5).toUpperCase();
 
   const handleCreateRoom = () => {
+    if (!nickname.trim()) {
+      setError("Please enter a nickname.");
+      return;
+    }
     const code = generateRoomCode();
     setRoomId(code);
     setRoomCode(code);
     setInput(code);
     setCreatingRoom(false);
     setJoined(true);
+    setError("");
     if (socket) {
-      socket.emit("createRoom", code);
+      socket.emit("createRoom", { roomId: code, maxRoomSize, nickname });
     }
   };
 
   const handleJoin = () => {
+    if (!nickname.trim()) {
+      setError("Please enter a nickname.");
+      return;
+    }
     if (input.trim().length === 5) {
       setRoomId(input.trim().toUpperCase());
       setRoomCode(input.trim().toUpperCase());
       setJoined(true);
+      setError("");
       if (socket) {
-        socket.emit("join", input.trim().toUpperCase());
+        socket.emit("join", { roomId: input.trim().toUpperCase(), nickname });
       }
     }
   };
@@ -83,12 +102,16 @@ export default function Home() {
     };
     const onVotingPhase = () => setVoting(true);
     const onResults = (data: Results) => setResults(data);
+    const onPlayers = (data: { players: string[] }) => {
+      setPlayers(data.players);
+    };
     socket.on("role", onRole);
     socket.on("yourTurn", onYourTurn);
     socket.on("cluePhase", onCluePhase);
     socket.on("allClues", onAllClues);
     socket.on("votingPhase", onVotingPhase);
     socket.on("results", onResults);
+    socket.on("players", onPlayers);
     return () => {
       socket.off("role", onRole);
       socket.off("yourTurn", onYourTurn);
@@ -96,13 +119,14 @@ export default function Home() {
       socket.off("allClues", onAllClues);
       socket.off("votingPhase", onVotingPhase);
       socket.off("results", onResults);
+      socket.off("players", onPlayers);
     };
   }, [socket]);
 
   useEffect(() => {
     if (!socket) return;
     const onRoomError = (data: { error: string }) => {
-      alert(data.error);
+      setError(data.error);
       setJoined(false);
       setRoomId("");
       setRoomCode("");
@@ -171,29 +195,61 @@ export default function Home() {
         </h1>
         {!joined ? (
           <>
+            <div className="w-full flex justify-end mb-2">
+              <select
+                className="border-2 border-red-400 rounded-xl px-2 py-1 bg-white text-red-900 text-sm font-semibold focus:border-red-600 focus:ring-2 focus:ring-red-200 outline-none shadow focus:shadow-lg"
+                value={language}
+                onChange={e => setLanguage(e.target.value as 'en' | 'de')}
+                aria-label="Language selector"
+              >
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+              </select>
+            </div>
+            {error && (
+              <div className="w-full mb-2 text-center text-red-700 bg-red-100 rounded-lg px-3 py-2 font-semibold border border-red-300">
+                {error}
+              </div>
+            )}
+            <input
+              className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
+              placeholder={t('Enter your nickname...', 'Gib deinen Spitznamen ein...')}
+              value={nickname}
+              maxLength={16}
+              onChange={e => setNickname(e.target.value)}
+            />
             <div className="flex flex-col gap-2 w-full mb-4">
               <button
                 className="bg-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-800 transition-all w-full text-lg"
                 onClick={handleCreateRoom}
               >
-                Create Room
+                {t('Create Room', 'Raum erstellen')}
               </button>
               <button
                 className="bg-white text-red-700 border-2 border-red-400 px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-100 transition-all w-full text-lg"
                 onClick={() => setCreatingRoom(false)}
               >
-                Join Room
+                {t('Join Room', 'Raum beitreten')}
               </button>
             </div>
             {creatingRoom && roomCode && (
               <div className="w-full flex flex-col items-center">
+                <label className="mb-2 text-red-700 font-semibold">{t('Max Room Size', 'Maximale Raumgröße')}</label>
+                <input
+                  type="number"
+                  min={3}
+                  max={12}
+                  className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-2 mb-3 w-32 bg-white text-red-900 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg text-center"
+                  value={maxRoomSize}
+                  onChange={e => setMaxRoomSize(Number(e.target.value))}
+                />
                 <div className="text-center mt-2">
-                  <p className="text-lg text-red-700 font-bold">Room Code:</p>
+                  <p className="text-lg text-red-700 font-bold">{t('Room Code:', 'Raumcode:')}</p>
                   <p className="text-3xl font-mono text-red-800 tracking-widest bg-red-100 rounded-lg px-4 py-2 shadow-inner select-all">
                     {roomCode}
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
-                    Share this code with friends to join!
+                    {t('Share this code with friends to join!', 'Teile diesen Code mit Freunden!')}
                   </p>
                 </div>
               </div>
@@ -202,7 +258,7 @@ export default function Home() {
               <div className="w-full flex flex-col items-center">
                 <input
                   className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg tracking-widest uppercase"
-                  placeholder="Enter 5-letter room code..."
+                  placeholder={t('Enter 5-letter room code...', 'Gib den 5-stelligen Raumcode ein...')}
                   value={input}
                   maxLength={5}
                   onChange={(e) => setInput(e.target.value.toUpperCase())}
@@ -212,7 +268,7 @@ export default function Home() {
                   onClick={handleJoin}
                   disabled={input.trim().length !== 5}
                 >
-                  Join Room
+                  {t('Join Room', 'Raum beitreten')}
                 </button>
               </div>
             )}
@@ -220,15 +276,14 @@ export default function Home() {
         ) : !wordSubmitted ? (
           <div className="w-full flex flex-col items-center">
             <p className="mb-2 text-lg text-red-700 font-medium">
-              Room:{" "}
-              <span className="font-mono text-red-500">{roomId}</span>
+              {t('Room:', 'Raum:')} <span className="font-mono text-red-500">{roomId}</span>
             </p>
             <p className="mb-4 text-red-500 font-semibold">
-              {connected && socketJoined ? "Connected!" : "Connecting..."}
+              {connected && socketJoined ? t('Connected!', 'Verbunden!') : t('Connecting...', 'Verbinde...')}
             </p>
             <input
               className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
-              placeholder="Enter your word..."
+              placeholder={t('Enter your word...', 'Gib dein Wort ein...')}
               value={word}
               onChange={(e) => setWord(e.target.value)}
               disabled={!connected || !socketJoined}
@@ -238,12 +293,12 @@ export default function Home() {
               onClick={handleWordSubmit}
               disabled={!word.trim() || !connected || !socketJoined}
             >
-              Submit Word
+              {t('Submit Word', 'Wort abschicken')}
             </button>
           </div>
         ) : role ? (
           <div className="text-center">
-            <p className="mb-2 text-lg font-semibold text-red-700">Your role:</p>
+            <p className="mb-2 text-lg font-semibold text-red-700">{t('Your role:', 'Deine Rolle:')}</p>
             <p
               className={
                 role === "traitor"
@@ -251,40 +306,37 @@ export default function Home() {
                   : "text-green-600 text-3xl font-extrabold drop-shadow-sm"
               }
             >
-              {role === "traitor" ? "Traitor" : "Friend"}
+              {role === 'traitor' ? t('Traitor', 'Verräter') : t('Friend', 'Freund')}
             </p>
-            {role === "friend" && gameWord && (
+            {role === 'friend' && gameWord && (
               <p className="mt-4 text-lg text-red-700 font-medium">
-                The word is:{" "}
-                <span className="font-mono text-red-600 bg-red-100 px-2 py-1 rounded-lg shadow-inner">
-                  {gameWord}
-                </span>
+                {t('The word is:', 'Das Wort ist:')} <span className="font-mono text-red-600 bg-red-100 px-2 py-1 rounded-lg shadow-inner">{gameWord}</span>
               </p>
             )}
-            {role === "traitor" && (
+            {role === 'traitor' && (
               <p className="mt-4 text-lg italic text-gray-500">
-                You do NOT know the word!
+                {t('You do NOT know the word!', 'Du kennst das Wort NICHT!')}
               </p>
             )}
           </div>
         ) : (
           <div className="text-center">
             <p className="mb-2 text-lg text-red-700 font-medium">
-              Waiting for other players to submit their words...
+              {t('Waiting for other players to submit their words...', 'Warte auf die anderen Spieler...')}
             </p>
           </div>
         )}
         {role && cluePhase && !voting && !results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">Clue Phase</h2>
+            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Clue Phase', 'Hinweisrunde')}</h2>
             <p className="mb-2 text-red-500 font-medium">
-              Turn {clueTurn + 1} of {totalPlayers}
+              {t('Turn', 'Runde')} {clueTurn + 1} {t('of', 'von')} {totalPlayers}
             </p>
             {isMyTurn ? (
               <div>
                 <input
                   className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
-                  placeholder="Enter your clue..."
+                  placeholder={t('Enter your clue...', 'Gib deinen Hinweis ein...')}
                   value={clue}
                   onChange={(e) => setClue(e.target.value)}
                 />
@@ -293,19 +345,19 @@ export default function Home() {
                   onClick={handleClueSubmit}
                   disabled={!clue.trim()}
                 >
-                  Submit Clue
+                  {t('Submit Clue', 'Hinweis abschicken')}
                 </button>
               </div>
             ) : (
               <p className="italic text-gray-400">
-                Waiting for the current player to submit a clue...
+                {t('Waiting for the current player to submit a clue...', 'Warte auf den aktuellen Spieler...')}
               </p>
             )}
           </div>
         )}
         {allClues.length > 0 && !results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">All Clues</h2>
+            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('All Clues', 'Alle Hinweise')}</h2>
             <ul className="mb-2">
               {allClues.map((c, i) => (
                 <li
@@ -320,16 +372,16 @@ export default function Home() {
         )}
         {voting && !results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">Voting Phase</h2>
+            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Voting Phase', 'Abstimmungsrunde')}</h2>
             <p className="mb-2 text-red-500 font-medium">
-              Vote for the suspected traitor:
+              {t('Vote for the suspected traitor:', 'Stimme für den vermuteten Verräter:')}
             </p>
             <select
               className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
               value={vote}
               onChange={(e) => setVote(e.target.value)}
             >
-              <option value="">Select player</option>
+              <option value="">{t('Select player', 'Spieler wählen')}</option>
               {/* For demo: use player numbers, in real app use names/IDs */}
               {Array.from({ length: totalPlayers }).map((_, i) => (
                 <option key={i} value={`player${i + 1}`}>
@@ -342,24 +394,41 @@ export default function Home() {
               onClick={handleVote}
               disabled={!vote}
             >
-              Submit Vote
+              {t('Submit Vote', 'Abstimmen')}
             </button>
           </div>
         )}
         {results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">Results</h2>
+            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Results', 'Ergebnisse')}</h2>
             <ul className="mb-2">
               {Object.entries(results.voteCounts).map(([id, count], i) => (
                 <li
                   key={i}
                   className="mb-1 text-lg text-red-800 bg-red-100 rounded-lg px-3 py-1 shadow-inner"
                 >
-                  {id}: {String(count)} vote(s)
+                  {id}: {String(count)} {t('vote(s)', 'Stimme(n)')}
                 </li>
               ))}
             </ul>
-            <p className="mt-2 font-bold text-red-700">Game Over!</p>
+            <p className="mt-2 font-bold text-red-700">{t('Game Over!', 'Spiel vorbei!')}</p>
+          </div>
+        )}
+        {joined && (
+          <div className="w-full flex flex-col items-center mb-4">
+            <p className="text-base text-red-700 font-semibold mb-1">
+              {t('Your nickname:', 'Dein Spitzname:')} <span className="font-mono text-red-800">{nickname}</span>
+            </p>
+            <div className="w-full bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
+              <p className="text-sm text-red-700 font-bold mb-1">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
+              <ul className="flex flex-wrap gap-2">
+                {players.map((p, i) => (
+                  <li key={i} className="px-2 py-1 bg-white rounded shadow text-red-700 font-mono text-sm">
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
         {joined && (
@@ -367,7 +436,7 @@ export default function Home() {
             className="mt-4 bg-white text-red-700 border-2 border-red-400 px-4 py-2 rounded-xl font-semibold shadow hover:bg-red-100 transition-all text-base"
             onClick={handleLeaveRoom}
           >
-            Leave Room
+            {t('Leave Room', 'Raum verlassen')}
           </button>
         )}
       </div>
