@@ -2,7 +2,6 @@
 # Secure Dockerfile for Next.js (with Socket.IO API route)
 # Use official Node.js LTS image
 ARG BUILD_NUMBER=dev
-LABEL version=$BUILD_NUMBER
 FROM node:20-alpine AS deps
 
 # Set working directory
