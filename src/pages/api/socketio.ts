@@ -13,7 +13,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponseServerI
       cors: {
         origin: '*',
         methods: ['GET', 'POST']
-      }
+      },
+      transports: ['polling'], // Force long polling, disable websocket
     });
     res.socket.server.io = io;
     io.on('connection', (socket) => {

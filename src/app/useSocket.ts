@@ -24,7 +24,7 @@ export function useSocket(roomId: string, nickname: string) {
     console.log('[useSocket] initializing socket.io with url:', url);
     socketRef.current = io(url, {
       path: '/api/socketio',
-      transports: ['websocket', 'polling'],
+      transports: ['polling'], // Only use polling, disables websocket
       withCredentials: true,
     });
     // --- SOCKET EVENT LOGGING ---
