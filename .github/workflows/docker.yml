@@ -31,7 +31,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: ${{ github.event_name == 'push' }}
-          attests: true
+          platforms: linux/amd64,linux/arm64
           build-args: |
             BUILD_NUMBER=${{ github.run_number }}-${{ github.sha }}
           tags: |
