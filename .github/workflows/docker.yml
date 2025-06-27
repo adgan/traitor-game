@@ -31,6 +31,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: ${{ github.event_name == 'push' }}
+          attests: true
+          build-args: |
+            BUILD_NUMBER=${{ github.run_number }}-${{ github.sha }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
           provenance: true
