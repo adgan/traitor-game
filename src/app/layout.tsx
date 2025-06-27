@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BUILD_NUMBER } from '../buildInfo';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +32,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
+        style={{ minHeight: '100dvh', margin: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
       >
-        {children}
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {children}
+        </div>
+        <div
+          className="fixed bottom-0 left-0 text-xs text-gray-400 py-2 px-3 select-none pointer-events-none z-50"
+          style={{ userSelect: 'none' }}
+        >
+          Build: {BUILD_NUMBER}
+        </div>
       </body>
     </html>
   );
