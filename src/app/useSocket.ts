@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+
 export function useSocket(roomId: string, nickname: string) {
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
+  const [players, setPlayers] = useState<string[]>([]);
   const socketRef = useRef<Socket | null>(null);
 
   // Only create/cleanup socket on mount/unmount
@@ -58,10 +60,16 @@ export function useSocket(roomId: string, nickname: string) {
     socketRef.current.on('pong', (latency) => {
       console.log('[useSocket] pong', latency);
     });
+    // Listen for player list updates
+    socketRef.current.on('players', (data: { players: string[] }) => {
+      console.log('[useSocket] players event received', data);
+      setPlayers(data.players);
+    });
     // --- END SOCKET EVENT LOGGING ---
     return () => {
       if (socketRef.current) {
         console.log('[useSocket] cleaning up, disconnecting socket');
+        socketRef.current.off('players');
         socketRef.current.disconnect();
         socketRef.current = null;
       }
@@ -97,5 +105,5 @@ export function useSocket(roomId: string, nickname: string) {
     }
   }, [roomId, nickname, joined]);
 
-  return { socket: socketRef.current, connected, joined };
+  return { socket: socketRef.current, connected, joined, players };
 }

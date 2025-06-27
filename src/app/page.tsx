@@ -484,7 +484,10 @@ export default function Home() {
               <p className="text-sm text-red-700 font-bold mb-1">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
               <ul className="flex flex-wrap gap-2">
                 {players.map((p, i) => (
-                  <li key={i} className="px-2 py-1 bg-white rounded shadow text-red-700 font-mono text-sm">
+                  <li
+                    key={i}
+                    className={`px-2 py-1 bg-white rounded shadow text-red-700 font-mono text-sm border-2 transition-all ${p === nickname ? 'border-red-500' : 'border-transparent'}`}
+                  >
                     {p}
                   </li>
                 ))}
