@@ -274,6 +274,14 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     }
     socket.leave(roomId);
     socket.emit('leftRoom', roomId);
+    // Remove room if no active players left
+    const stillActive = room.players.some(p => !p.inactive);
+    if (!stillActive) {
+      console.log(`Removing room ${roomId} due to no active players.`);
+      io.to(roomId).emit('roomClosed', { message: 'The room has been closed due to inactivity.' });
+      // Optionally notify all players in the room
+      delete roomWords[roomId];
+    }
   });
 
   // Clean up on disconnect
@@ -295,6 +303,11 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
           }
         }
         emitPlayers(roomId);
+      }
+      // Remove room if no active players left
+      const stillActive = room.players.some(p => !p.inactive);
+      if (!stillActive) {
+        delete roomWords[roomId];
       }
     });
   });
