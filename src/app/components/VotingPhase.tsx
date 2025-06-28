@@ -4,9 +4,13 @@ interface Player {
   inactive?: boolean;
 }
 
+interface Results {
+  votes: Record<string, string>;
+  voteCounts: Record<string, number>;
+}
 interface VotingPhaseProps {
   voting: boolean;
-  results: any;
+  results: Results | null;
   t: (en: string, de: string) => string;
   vote: string;
   setVote: (v: string) => void;
@@ -15,7 +19,7 @@ interface VotingPhaseProps {
   darkMode: boolean;
 }
 
-export default function VotingPhase({ voting, results, t, vote, setVote, handleVote, players, darkMode }: VotingPhaseProps) {
+export default function VotingPhase({ voting, results, t, vote, setVote, handleVote, players }: VotingPhaseProps) {
   if (!(voting && !results)) return null;
   return (
     <div className="w-full text-center mt-6">

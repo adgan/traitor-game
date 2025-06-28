@@ -1,7 +1,11 @@
+interface Results {
+  votes: Record<string, string>;
+  voteCounts: Record<string, number>;
+}
 interface CluePhaseProps {
   cluePhase: boolean;
   voting: boolean;
-  results: any;
+  results: Results | null;
   isMyTurn: boolean;
   clue: string;
   setClue: (v: string) => void;

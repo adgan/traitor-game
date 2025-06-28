@@ -1,3 +1,5 @@
+import type { Socket } from 'socket.io-client';
+
 interface WordSubmittedWaitingProps {
   darkMode: boolean;
   t: (en: string, de: string) => string;
@@ -5,7 +7,7 @@ interface WordSubmittedWaitingProps {
   setWordSubmitted: (v: boolean) => void;
   setRole: (v: string | null) => void;
   setGameWord: (v: string | null) => void;
-  socket: any;
+  socket: Socket | null;
   roomId: string;
   nickname: string;
 }

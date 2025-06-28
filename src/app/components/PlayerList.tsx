@@ -1,9 +1,9 @@
-interface Player {
+export type Player = {
   playerId: string;
   nickname: string;
   inactive?: boolean;
   admin?: boolean;
-}
+};
 
 interface PlayerListProps {
   players: Player[];
@@ -11,7 +11,7 @@ interface PlayerListProps {
   darkMode: boolean;
   t: (en: string, de: string) => string;
   roomId: string;
-  socket: any;
+  socket: import("socket.io-client").Socket | null;
   maxRoomSize: number;
 }
 

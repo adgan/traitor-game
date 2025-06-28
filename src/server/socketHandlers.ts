@@ -1,6 +1,6 @@
 import type { Server, Socket } from 'socket.io';
 import { roomWords } from './roomManager';
-import type { RoomPlayer } from './types/Room';
+// import type { RoomPlayer } from './types/Room';
 export function registerSocketHandlers(io: Server, socket: Socket) {
   // Admin kick feature
   socket.on('kickPlayer', (data: { roomId: string; adminId: string; targetPlayerId: string }) => {

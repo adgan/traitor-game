@@ -1,11 +1,12 @@
 import React from "react";
 
+import type { Player } from "./PlayerList";
 type WordEntrySectionProps = {
   darkMode: boolean;
   t: (en: string, de: string) => string;
   roomId: string;
   maxRoomSize: number;
-  players: any[];
+  players: Player[];
   connected: boolean;
   socketJoined: boolean;
   word: string;

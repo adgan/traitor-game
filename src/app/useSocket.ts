@@ -7,7 +7,7 @@ import { io, Socket } from 'socket.io-client';
 export function useSocket(roomId: string, nickname: string, playerId: string) {
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
-  const [players, setPlayers] = useState<string[]>([]);
+  const [players] = useState<string[]>([]);
   const socketRef = useRef<Socket | null>(null);
 
   // Only create/cleanup socket on mount/unmount

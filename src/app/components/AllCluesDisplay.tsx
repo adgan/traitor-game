@@ -1,7 +1,11 @@
+interface Results {
+  votes: Record<string, string>;
+  voteCounts: Record<string, number>;
+}
 interface AllCluesDisplayProps {
   allClues: string[];
   t: (en: string, de: string) => string;
-  results: any;
+  results: Results | null;
 }
 
 export default function AllCluesDisplay({ allClues, t, results }: AllCluesDisplayProps) {
