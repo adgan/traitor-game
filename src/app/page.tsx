@@ -306,6 +306,14 @@ export default function Home() {
                 <option value="de">Deutsch</option>
               </select>
             </div>
+            <div className="w-full mb-6">
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-base text-center font-medium">
+                <span className="block text-lg font-bold mb-2">{t('Welcome to Traitor Party Game!', 'Willkommen beim Traitor Party Game!')}</span>
+                <span className="block mb-1">{t('To get started, enter your nickname below.', 'Gib zuerst deinen Spitznamen ein.')}</span>
+                <span className="block mb-1">{t('You can create a new room or join an existing one.', 'Erstelle einen neuen Raum oder trete einem bestehenden bei.')}</span>
+                <span className="block text-blue-700 mt-2">{t('Tip: Share your room code with friends to play together!', 'Tipp: Teile deinen Raumcode mit Freunden!')}</span>
+              </div>
+            </div>
             {error && (
               <div className="w-full mb-3 text-center text-red-700 bg-red-100 rounded-lg px-3 py-2 font-medium border border-red-200">
                 {error}
@@ -361,6 +369,9 @@ export default function Home() {
             )}
             {!creatingRoom && (
               <div className="w-full flex flex-col items-center">
+                <div className="mb-2 text-blue-800 text-base font-medium text-center">
+                  {t('Already have a room code?', 'Hast du schon einen Raumcode?')}
+                </div>
                 <input
                   className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-3 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none tracking-widest uppercase"
                   placeholder={t('Enter 5-letter room code...', 'Gib den 5-stelligen Raumcode ein...')}
