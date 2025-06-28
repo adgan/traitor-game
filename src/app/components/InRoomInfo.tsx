@@ -1,8 +1,7 @@
 import Notifications from "./Notifications";
-import PlayerList from "./PlayerList";
+import PlayerList, { Player } from "./PlayerList";
+import type { Socket } from "socket.io-client";
 
-
-type Player = { playerId: string; nickname: string; inactive?: boolean; admin?: boolean };
 interface InRoomInfoProps {
   notifications: { id: number; message: string }[];
   t: (en: string, de: string) => string;
@@ -11,7 +10,7 @@ interface InRoomInfoProps {
   playerId: string;
   darkMode: boolean;
   roomId: string;
-  socket: unknown;
+  socket: Socket | null;
   maxRoomSize: number;
 }
 
