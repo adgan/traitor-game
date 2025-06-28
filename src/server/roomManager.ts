@@ -1,10 +1,7 @@
 
 // RoomManager: handles all room state and logic
-import type { RoomWords } from './types';
+import type { Room } from './types/Room';
+export type RoomWords = Record<string, Room>;
 export const roomWords: RoomWords = {};
 
-export function getPlayers(roomId: string): string[] {
-  const room = roomWords[roomId];
-  if (!room) return [];
-  return room.sockets.map(sid => room.nicknames[sid] || '');
-}
+// getPlayers is no longer used; player list is now sent with inactive info from socketHandlers

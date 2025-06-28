@@ -1,20 +1,31 @@
 
 "use client";
 
-import { useSocket } from "./useSocket";
-import { useEffect, useState } from "react";
 
+import { useEffect, useState } from "react";
 import { nanoid } from "nanoid";
+import { useSocket } from "./useSocket";
 import Link from "next/link";
 
 export default function Home() {
+  // Persistent playerId for reconnect logic
+  const [playerId, setPlayerId] = useState<string>("");
+  // On mount, generate or load playerId
+  useEffect(() => {
+    let pid = localStorage.getItem("playerId");
+    if (!pid) {
+      pid = nanoid();
+      localStorage.setItem("playerId", pid);
+    }
+    setPlayerId(pid);
+  }, []);
+
   // Dark mode state
   const [darkMode, setDarkMode] = useState(false);
-
   const [roomId, setRoomId] = useState("");
   const [nickname, setNickname] = useState("");
   const [results, setResults] = useState<Results | null>(null);
-  const { socket, connected, joined: socketJoined } = useSocket(roomId, nickname);
+  const { socket, connected, joined: socketJoined } = useSocket(roomId, nickname, playerId);
   const [input, setInput] = useState("");
   const [joined, setJoined] = useState(false);
   const [word, setWord] = useState("");
@@ -30,12 +41,12 @@ export default function Home() {
   const [allClues, setAllClues] = useState<string[]>([]);
   const [vote, setVote] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
-  const [pendingRoomCode, setPendingRoomCode] = useState("");
-  const [roomCode, setRoomCode] = useState("");
+  // Removed unused: pendingRoomCode, roomCode
   const [maxRoomSize, setMaxRoomSize] = useState(6);
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<'en' | 'de'>('en');
-  const [players, setPlayers] = useState<string[]>([]);
+  type Player = { playerId: string; nickname: string; inactive?: boolean };
+  const [players, setPlayers] = useState<Player[]>([]);
   const [lang, setLang] = useState("en");
   // Notification system
   const [notifications, setNotifications] = useState<{ id: number; message: string }[]>([]);
@@ -73,7 +84,7 @@ export default function Home() {
   // Step 1: Start room creation (show options)
   const handleStartCreateRoom = () => {
     setCreatingRoom(true);
-    setPendingRoomCode("");
+    // removed setPendingRoomCode
     setError("");
   };
 
@@ -85,14 +96,14 @@ export default function Home() {
     }
     const code = generateRoomCode();
     setRoomId(code);
-    setRoomCode(code);
+    // removed setRoomCode
     setInput(code);
     setCreatingRoom(false);
     setJoined(true);
     setError("");
-    setPendingRoomCode("");
-    if (socket) {
-      socket.emit("createRoom", { roomId: code, maxRoomSize, nickname });
+    // removed setPendingRoomCode
+    if (socket && playerId) {
+      socket.emit("createRoom", { roomId: code, maxRoomSize, nickname, playerId });
     }
   };
 
@@ -103,11 +114,11 @@ export default function Home() {
     }
     if (input.trim().length === 5) {
       setRoomId(input.trim().toUpperCase());
-      setRoomCode(input.trim().toUpperCase());
+      // removed setRoomCode
       setJoined(true);
       setError("");
-      if (socket) {
-        socket.emit("join", { roomId: input.trim().toUpperCase(), nickname });
+      if (socket && playerId) {
+        socket.emit("join", { roomId: input.trim().toUpperCase(), nickname, playerId });
       }
     }
   };
@@ -139,7 +150,7 @@ export default function Home() {
     };
     const onVotingPhase = () => setVoting(true);
     const onResults = (data: Results) => setResults(data);
-    const onPlayers = (data: { players: string[] }) => {
+    const onPlayers = (data: { players: Player[] }) => {
       setPlayers(data.players);
     };
     socket.on("role", onRole);
@@ -166,7 +177,7 @@ export default function Home() {
       setError(data.error);
       setJoined(false);
       setRoomId("");
-      setRoomCode("");
+      // removed setRoomCode
       setInput("");
     };
     socket.on("roomError", onRoomError);
@@ -198,7 +209,7 @@ export default function Home() {
     if (savedLanguage === "en" || savedLanguage === "de") setLanguage(savedLanguage);
     if (savedRoomId && savedNickname) {
       setRoomId(savedRoomId);
-      setRoomCode(savedRoomId);
+      // removed setRoomCode
       setNickname(savedNickname);
       setInput(savedRoomId);
       setJoined(true);
@@ -209,10 +220,10 @@ export default function Home() {
 
   // Emit join when socket, roomId, and nickname are all set
   useEffect(() => {
-    if (socket && roomId && nickname && joined) {
-      socket.emit("join", { roomId, nickname });
+    if (socket && roomId && nickname && joined && playerId) {
+      socket.emit("join", { roomId, nickname, playerId });
     }
-  }, [socket, roomId, nickname, joined]);
+  }, [socket, roomId, nickname, joined, playerId]);
 
   // Save session info on join/create
   useEffect(() => {
@@ -225,11 +236,10 @@ export default function Home() {
 
   // Clear session info on leave
   const handleLeaveRoom = () => {
-    if (socket && roomId) {
-      socket.emit("leaveRoom", roomId);
+    if (socket && roomId && playerId) {
+      socket.emit("leaveRoom", { roomId, playerId });
       setJoined(false);
       setRoomId("");
-      setRoomCode("");
       setInput("");
       setWord("");
       setWordSubmitted(false);
@@ -698,10 +708,9 @@ export default function Home() {
               onChange={(e) => setVote(e.target.value)}
             >
               <option value="">{t('Select player', 'Spieler wählen')}</option>
-              {/* For demo: use player numbers, in real app use names/IDs */}
-              {Array.from({ length: totalPlayers }).map((_, i) => (
-                <option key={i} value={`player${i + 1}`}>
-                  {`Player ${i + 1}`}
+              {players.filter(p => !p.inactive).map((p) => (
+                <option key={p.playerId} value={p.playerId}>
+                  {p.nickname}
                 </option>
               ))}
             </select>
@@ -775,19 +784,29 @@ export default function Home() {
                 }>{players.length} / {maxRoomSize}</span>
               </div>
               <ul className="flex flex-wrap gap-2">
-                {players.map((p, i) => (
-                  <li
-                    key={i}
-                    className={
-                      'px-2 py-1 rounded shadow font-mono text-sm border-2 transition-all ' +
-                      (darkMode
-                        ? `bg-blue-900 text-blue-100 ${p === nickname ? 'border-blue-400' : 'border-transparent'}`
-                        : `bg-white text-blue-700 ${p === nickname ? 'border-blue-500' : 'border-transparent'}`)
-                    }
-                  >
-                    {p}
-                  </li>
-                ))}
+                {players.map((p, i) => {
+                  const isMe = p.nickname === nickname;
+                  const base = darkMode
+                    ? 'bg-blue-900 text-blue-100'
+                    : 'bg-white text-blue-700';
+                  const border = isMe
+                    ? (darkMode ? 'border-blue-400' : 'border-blue-500')
+                    : 'border-transparent';
+                  const inactive = p.inactive
+                    ? (darkMode
+                        ? 'opacity-50 grayscale'
+                        : 'opacity-60 grayscale')
+                    : '';
+                  return (
+                    <li
+                      key={i}
+                      className={`px-2 py-1 rounded shadow font-mono text-sm border-2 transition-all ${base} ${border} ${inactive}`}
+                      title={p.inactive ? t('Inactive', 'Inaktiv') : ''}
+                    >
+                      {p.nickname}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

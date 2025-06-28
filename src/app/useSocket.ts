@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 
-export function useSocket(roomId: string, nickname: string) {
+export function useSocket(roomId: string, nickname: string, playerId: string) {
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
   const [players, setPlayers] = useState<string[]>([]);
@@ -61,7 +61,7 @@ export function useSocket(roomId: string, nickname: string) {
       console.log('[useSocket] pong', latency);
     });
     // Listen for player list updates
-    socketRef.current.on('players', (data: { players: string[] }) => {
+    socketRef.current.on('players', (data: { players: any[] }) => {
       console.log('[useSocket] players event received', data);
       setPlayers(data.players);
     });
@@ -76,16 +76,16 @@ export function useSocket(roomId: string, nickname: string) {
     };
   }, []);
 
-  // Emit join when both roomId and nickname are set and not already joined
+  // Emit join when both roomId, nickname, and playerId are set and not already joined
   useEffect(() => {
     const socket = socketRef.current;
-    console.log('[useSocket] useEffect [roomId, nickname, joined] triggered', { roomId, nickname, joined, socketExists: !!socket });
-    if (socket && roomId && nickname && !joined) {
+    console.log('[useSocket] useEffect [roomId, nickname, playerId, joined] triggered', { roomId, nickname, playerId, joined, socketExists: !!socket });
+    if (socket && roomId && nickname && playerId && !joined) {
       socket.off('joined');
       socket.off('connect');
       socket.on('connect', () => {
-        console.log('[useSocket] socket connected, emitting join', { roomId, nickname });
-        socket.emit('join', { roomId, nickname });
+        console.log('[useSocket] socket connected, emitting join', { roomId, nickname, playerId });
+        socket.emit('join', { roomId, nickname, playerId });
       });
       socket.on('joined', () => {
         console.log('[useSocket] joined event received');
@@ -94,16 +94,17 @@ export function useSocket(roomId: string, nickname: string) {
       });
       // If already connected, emit join immediately
       if (socket.connected) {
-        console.log('[useSocket] socket already connected, emitting join', { roomId, nickname });
-        socket.emit('join', { roomId, nickname });
+        console.log('[useSocket] socket already connected, emitting join', { roomId, nickname, playerId });
+        socket.emit('join', { roomId, nickname, playerId });
       }
     } else {
       if (!roomId) console.warn('[useSocket] No roomId provided');
       if (!nickname) console.warn('[useSocket] No nickname provided');
+      if (!playerId) console.warn('[useSocket] No playerId provided');
       if (joined) console.log('[useSocket] Already joined, skipping join emit');
       if (!socket) console.warn('[useSocket] No socket instance available');
     }
-  }, [roomId, nickname, joined]);
+  }, [roomId, nickname, playerId, joined]);
 
   return { socket: socketRef.current, connected, joined, players };
 }
