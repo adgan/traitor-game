@@ -49,10 +49,11 @@ export default function WordEntrySection({
       </div>
       <p className={"mb-1 font-medium " + (darkMode ? "text-blue-100" : "text-blue-900")}>{t("Room size:", "Raumgröße:")} <span className={darkMode ? "font-mono text-blue-200" : "font-mono text-blue-900"}>{maxRoomSize}</span></p>
       <p className={"mb-1 font-medium " + (darkMode ? "text-blue-100" : "text-blue-900")}>{t("Players joined:", "Spieler beigetreten:")} <span className={darkMode ? "font-mono text-blue-200" : "font-mono text-blue-900"}>{players.length}</span> / <span className={darkMode ? "font-mono text-blue-200" : "font-mono text-blue-900"}>{maxRoomSize}</span></p>
-      {players.length < 3 && (
+      {/* Only show lobby waiting messages if not in-game (i.e., before startLocked) */}
+      {!startLocked && players.length < 3 && (
         <p className={"mb-2 font-medium rounded px-2 py-1 border transition-colors " + (darkMode ? "bg-blue-950 border-blue-900 text-blue-100" : "bg-blue-100 border-blue-200 text-blue-700")}>{t("Waiting for at least 3 players to join...", "Warte auf mindestens 3 Spieler...")}</p>
       )}
-      {players.length < maxRoomSize && players.length >= 3 && (
+      {!startLocked && players.length < maxRoomSize && players.length >= 3 && (
         <p className={"mb-2 font-medium rounded px-2 py-1 border transition-colors " + (darkMode ? "bg-blue-950 border-blue-900 text-blue-100" : "bg-blue-100 border-blue-200 text-blue-700")}>{t("Waiting for more players or for the host to start...", "Warte auf weitere Spieler oder den Host...")}</p>
       )}
       <p className="mb-4 text-blue-700 font-medium">{connected && socketJoined ? t("Connected!", "Verbunden!") : t("Connecting...", "Verbinde...")}</p>

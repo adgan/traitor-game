@@ -442,34 +442,8 @@ export default function Home() {
             setCreatingRoom={setCreatingRoom}
             input={input}
             setInput={setInput}
-            handleJoin={handleJoin}
-          />
-        ) : !startLocked ? (
-          // Waiting for admin to start the game
-          <div className="w-full flex flex-col items-center animate-fade-in-up mt-6">
-            <div className="text-lg font-semibold mb-2 text-blue-900 text-center">
-              {t('Waiting for the host to start the game...', 'Warte darauf, dass der Host das Spiel startet...')}
-            </div>
-            <div className="mb-2 text-blue-800 text-base font-medium text-center">
-              {t('Players in room:', 'Spieler im Raum:')} {players.length} / {maxRoomSize}
-            </div>
-            <div className="mb-2 text-blue-700 text-base text-center">
-              <span className="font-semibold">{t('Room Code:', 'Raumcode:')}</span> <span className="font-mono tracking-widest px-2 py-1 rounded bg-blue-100 text-blue-900 border border-blue-300">{roomId}</span>
-            </div>
-            <div className="mb-2 text-blue-700 text-base text-center">
-              <span className="font-semibold">{t('Your Nickname:', 'Dein Spitzname:')}</span> <span className="font-mono px-2 py-1 rounded bg-blue-50 text-blue-900 border border-blue-200">{nickname}</span>
-            </div>
-            {isAdmin() && (
-            <button
-              className="mt-4 bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
-              onClick={handleStartGame}
-              disabled={players.length < MIN_PLAYERS || startLocked}
-            >
-              {t('Start Game', 'Spiel starten')}
-            </button>
-            )}
-          </div>
-        ) : !wordSubmitted ? (
+            handleJoin={handleJoin} />
+        ) : startLocked || (!role && !wordSubmitted) ? (
           <WordEntrySection
             darkMode={darkMode}
             t={t}
