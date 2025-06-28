@@ -1,9 +1,91 @@
 import type { Server, Socket } from 'socket.io';
 import { roomWords } from './roomManager';
 import type { RoomPlayer } from './types/Room';
-
-
 export function registerSocketHandlers(io: Server, socket: Socket) {
+  // Admin kick feature
+  socket.on('kickPlayer', (data: { roomId: string; adminId: string; targetPlayerId: string }) => {
+    const { roomId, adminId, targetPlayerId } = data;
+    const room = roomWords[roomId];
+    if (!room) return;
+    if (room.adminId !== adminId) {
+      socket.emit('notification', { message: 'Only the admin can kick players.' });
+      return;
+    }
+    const target = room.players.find(p => p.playerId === targetPlayerId);
+    if (!target) {
+      socket.emit('notification', { message: 'Player not found.' });
+      return;
+    }
+    if (target.inactive) {
+      socket.emit('notification', { message: 'Player is already inactive.' });
+      return;
+    }
+    target.inactive = true;
+    // If kicked player is admin (should not happen), reassign admin
+    if (room.adminId === targetPlayerId) {
+      const nextActive = room.players.find(p => !p.inactive && p.playerId !== targetPlayerId);
+      if (nextActive) {
+        room.adminId = nextActive.playerId;
+        emitNotification(roomId, `${nextActive.nickname} is now the admin.`);
+      } else {
+        room.adminId = undefined;
+      }
+    }
+    emitPlayers(roomId);
+    emitNotification(roomId, `${target.nickname} was kicked by the admin.`);
+    // Notify and forcibly disconnect the kicked player if connected
+    if (target.socketId && io.sockets.sockets.has(target.socketId)) {
+      io.to(target.socketId).emit('notification', { message: 'You were kicked from the room by the admin.' });
+      io.to(target.socketId).emit('leftRoom', roomId);
+      // Remove from all rooms and disconnect
+      const targetSocket = io.sockets.sockets.get(target.socketId);
+      if (targetSocket) {
+        // Remove from all rooms (including the game room)
+        for (const roomName of targetSocket.rooms) {
+          if (roomName !== targetSocket.id) {
+            targetSocket.leave(roomName);
+          }
+        }
+        // Optionally, disconnect the socket to ensure no further events are received
+        targetSocket.disconnect(true);
+      }
+    }
+  });
+  // Admin kick feature
+  socket.on('kickPlayer', (data: { roomId: string; adminId: string; targetPlayerId: string }) => {
+    const { roomId, adminId, targetPlayerId } = data;
+    const room = roomWords[roomId];
+    if (!room) return;
+    if (room.adminId !== adminId) {
+      socket.emit('notification', { message: 'Only the admin can kick players.' });
+      return;
+    }
+    const targetIdx = room.players.findIndex(p => p.playerId === targetPlayerId);
+    if (targetIdx === -1) {
+      socket.emit('notification', { message: 'Player not found.' });
+      return;
+    }
+    const target = room.players[targetIdx];
+    // Remove the player from the room array entirely
+    room.players.splice(targetIdx, 1);
+    // If kicked player is admin (should not happen), reassign admin
+    if (room.adminId === targetPlayerId) {
+      const nextActive = room.players.find(p => !p.inactive);
+      if (nextActive) {
+        room.adminId = nextActive.playerId;
+        emitNotification(roomId, `${nextActive.nickname} is now the admin.`);
+      } else {
+        room.adminId = undefined;
+      }
+    }
+    emitPlayers(roomId);
+    emitNotification(roomId, `${target.nickname} was kicked by the admin.`);
+    // Notify and forcibly disconnect the kicked player
+    io.to(target.socketId).emit('notification', { message: 'You were kicked from the room by the admin.' });
+    io.to(target.socketId).emit('leftRoom', roomId);
+    io.sockets.sockets.get(target.socketId)?.leave(roomId);
+    io.sockets.sockets.get(target.socketId)?.disconnect(true);
+  });
   // Helper to emit player list to all in room, with admin info
   function emitPlayers(roomId: string) {
     const room = roomWords[roomId];
@@ -42,6 +124,8 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
       player.inactive = false;
       player.nickname = nickname; // allow nickname change on reconnect
     } else {
+      // Remove any previously inactive/kicked player with this playerId (if present)
+      room.players = room.players.filter(p => p.playerId !== playerId);
       // New player
       player = { playerId, nickname, socketId: socket.id, inactive: false };
       room.players.push(player);

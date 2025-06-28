@@ -66,7 +66,7 @@ export default function Home() {
     return () => {
       socket.off('notification', onNotification);
     };
-  }, [socket]);
+  }, [socket, playerId]);
 
   // Simple translation dictionary
   const t = (en: string, de: string) => (language === 'de' ? de : en);
@@ -151,6 +151,29 @@ export default function Home() {
     const onVotingPhase = () => setVoting(true);
     const onResults = (data: Results) => setResults(data);
     const onPlayers = (data: { players: Player[] }) => {
+      // If the current player is not in the list, force leave UI state
+      if (!data.players.some(p => p.playerId === playerId)) {
+        setJoined(false);
+        setRoomId("");
+        setInput("");
+        setWord("");
+        setWordSubmitted(false);
+        setRole(null);
+        setGameWord(null);
+        setIsMyTurn(false);
+        setClue("");
+        setCluePhase(false);
+        setClueTurn(0);
+        setTotalPlayers(0);
+        setVoting(false);
+        setAllClues([]);
+        setVote("");
+        setResults(null);
+        localStorage.removeItem("roomId");
+        localStorage.removeItem("nickname");
+        setPlayers([]);
+        return;
+      }
       setPlayers(data.players);
     };
     socket.on("role", onRole);
@@ -177,12 +200,34 @@ export default function Home() {
       setError(data.error);
       setJoined(false);
       setRoomId("");
-      // removed setRoomCode
       setInput("");
     };
+    const onLeftRoom = () => {
+      // Call the same logic as handleLeaveRoom, but do not emit leaveRoom again
+      setJoined(false);
+      setRoomId("");
+      setInput("");
+      setWord("");
+      setWordSubmitted(false);
+      setRole(null);
+      setGameWord(null);
+      setIsMyTurn(false);
+      setClue("");
+      setCluePhase(false);
+      setClueTurn(0);
+      setTotalPlayers(0);
+      setVoting(false);
+      setAllClues([]);
+      setVote("");
+      setResults(null);
+      localStorage.removeItem("roomId");
+      localStorage.removeItem("nickname");
+    };
     socket.on("roomError", onRoomError);
+    socket.on("leftRoom", onLeftRoom);
     return () => {
       socket.off("roomError", onRoomError);
+      socket.off("leftRoom", onLeftRoom);
     };
   }, [socket]);
 
@@ -221,9 +266,11 @@ export default function Home() {
   // Emit join when socket, roomId, and nickname are all set
   useEffect(() => {
     if (socket && roomId && nickname && joined && playerId) {
+      // Prevent duplicate join emits by checking if player is in the current players list
+      if (players.some(p => p.playerId === playerId)) return;
       socket.emit("join", { roomId, nickname, playerId });
     }
-  }, [socket, roomId, nickname, joined, playerId]);
+  }, [socket, roomId, nickname, joined, playerId, players]);
 
   // Save session info on join/create
   useEffect(() => {
@@ -259,16 +306,7 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    if (!socket) return;
-    const onLeftRoom = () => {
-      // Optionally handle post-leave logic
-    };
-    socket.on("leftRoom", onLeftRoom);
-    return () => {
-      socket.off("leftRoom", onLeftRoom);
-    };
-  }, [socket]);
+  // Remove duplicate leftRoom handler (handled above with full reload)
 
   useEffect(() => {
     const detected = typeof window !== "undefined"
@@ -786,6 +824,7 @@ export default function Home() {
               <ul className="flex flex-wrap gap-2">
                 {players.map((p) => {
                   const isMe = p.playerId === playerId;
+                  const isAdmin = players.find(pl => pl.playerId === playerId)?.admin;
                   const base = darkMode
                     ? 'bg-blue-900 text-blue-100'
                     : 'bg-white text-blue-700';
@@ -809,6 +848,25 @@ export default function Home() {
                           {/* Crown icon */}
                           <svg className="inline w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3l2.39 4.84 5.36.78-3.88 3.78.92 5.36L10 14.77l-4.79 2.52.92-5.36-3.88-3.78 5.36-.78z"/></svg>
                         </span>
+                      )}
+                      {/* Kick button for admin, not for self, not for already inactive */}
+                      {isAdmin && !isMe && !p.inactive && (
+                        <button
+                          className="ml-1 px-1 py-0.5 rounded text-xs font-bold text-red-600 bg-red-100 hover:bg-red-200 border border-red-200 transition"
+                          title={t('Kick player', 'Spieler entfernen')}
+                          aria-label={t('Kick player', 'Spieler entfernen')}
+                          onClick={() => {
+                            if (socket) {
+                              socket.emit('kickPlayer', {
+                                roomId,
+                                adminId: playerId,
+                                targetPlayerId: p.playerId
+                              });
+                            }
+                          }}
+                        >
+                          {t('Kick', 'Kicken')}
+                        </button>
                       )}
                     </li>
                   );
