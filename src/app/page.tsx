@@ -306,10 +306,10 @@ export default function Home() {
     >
       <div
         className={
-          `relative rounded-2xl shadow-xl px-10 py-12 max-w-lg w-full flex flex-col items-center border my-8 mx-2 md:mx-0 transition-colors duration-300 ` +
+          `relative rounded-2xl shadow-xl px-10 py-12 max-w-lg w-full flex flex-col items-center my-8 mx-2 md:mx-0 transition-colors duration-300 ` +
           (darkMode
-            ? 'bg-slate-900/95 border-slate-700'
-            : 'bg-white/95 border-slate-200')
+            ? 'md:bg-slate-900/95 md:border md:border-slate-700'
+            : 'md:bg-white/95 md:border md:border-slate-200')
         }
       >
         {/* Header with title and controls, fully responsive and visually separated */}
