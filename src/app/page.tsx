@@ -284,20 +284,20 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-br from-red-100 via-rose-200 to-red-300">
-      <div className="bg-white/90 rounded-3xl shadow-2xl p-10 max-w-md w-full flex flex-col items-center border border-red-200">
-        <h1 className="text-4xl font-extrabold mb-6 text-red-700 tracking-tight drop-shadow-md font-sans">
+    <main className="flex min-h-screen flex-col items-center justify-center p-0 bg-gradient-to-br from-blue-50 via-slate-100 to-blue-100">
+      <div className="relative bg-white/95 rounded-2xl shadow-xl px-10 py-12 max-w-lg w-full flex flex-col items-center border border-slate-200 my-8 mx-2 md:mx-0">
+        <h1 className="text-3xl font-bold mb-4 text-blue-800 tracking-tight font-sans drop-shadow-sm">
           Traitor Party Game
         </h1>
         {/* Help link in top-right corner, translated */}
-        <div className="absolute top-4 right-4">
-          <Link href="/help" className="text-blue-600 hover:underline font-medium" onClick={handleHelpClick}>{helpLabel}</Link>
+        <div className="absolute top-6 right-6">
+          <Link href="/help" className="text-blue-600 hover:underline font-medium transition-colors" onClick={handleHelpClick}>{helpLabel}</Link>
         </div>
         {!joined ? (
           <>
-            <div className="w-full flex justify-end mb-2">
+            <div className="w-full flex justify-end mb-4">
               <select
-                className="border-2 border-red-400 rounded-xl px-2 py-1 bg-white text-red-900 text-sm font-semibold focus:border-red-600 focus:ring-2 focus:ring-red-200 outline-none shadow focus:shadow-lg"
+                className="border border-slate-300 rounded-lg px-3 py-2 bg-slate-50 text-blue-900 text-sm font-medium focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition"
                 value={language}
                 onChange={e => setLanguage(e.target.value as 'en' | 'de')}
                 aria-label="Language selector"
@@ -307,20 +307,20 @@ export default function Home() {
               </select>
             </div>
             {error && (
-              <div className="w-full mb-2 text-center text-red-700 bg-red-100 rounded-lg px-3 py-2 font-semibold border border-red-300">
+              <div className="w-full mb-3 text-center text-red-700 bg-red-100 rounded-lg px-3 py-2 font-medium border border-red-200">
                 {error}
               </div>
             )}
             <input
-              className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
+              className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-4 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none"
               placeholder={t('Enter your nickname...', 'Gib deinen Spitznamen ein...')}
               value={nickname}
               maxLength={16}
               onChange={e => setNickname(e.target.value)}
             />
-            <div className="flex flex-col gap-2 w-full mb-4">
+            <div className="flex flex-col gap-2 w-full mb-6">
               <button
-                className="bg-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-800 transition-all w-full text-lg"
+                className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
                 onClick={handleStartCreateRoom}
               >
                 {t('Create Room', 'Raum erstellen')}
@@ -328,30 +328,30 @@ export default function Home() {
             </div>
             {creatingRoom && (
               <div className="w-full flex flex-col items-center animate-fade-in-up">
-                <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Room Settings', 'Raumeinstellungen')}</h2>
-                <label className="mb-2 text-red-700 font-semibold">{t('Max Players', 'Maximale Spielerzahl')}</label>
+                <h2 className="text-xl font-semibold mb-3 text-blue-900">{t('Room Settings', 'Raumeinstellungen')}</h2>
+                <label className="mb-2 text-blue-800 font-medium">{t('Max Players', 'Maximale Spielerzahl')}</label>
                 <div className="flex items-center gap-4 mb-4 w-full">
-                  <span className="text-red-700 font-bold">3</span>
+                  <span className="text-blue-400 font-semibold">3</span>
                   <input
                     type="range"
                     min={3}
                     max={15}
                     value={maxRoomSize}
                     onChange={e => setMaxRoomSize(Number(e.target.value))}
-                    className="w-full accent-red-500"
+                    className="w-full accent-blue-500"
                   />
-                  <span className="text-red-700 font-bold">15</span>
+                  <span className="text-blue-400 font-semibold">15</span>
                 </div>
-                <div className="mb-2 text-lg text-red-800 font-mono">{t('Selected:', 'Ausgewählt:')} {maxRoomSize}</div>
+                <div className="mb-2 text-base text-blue-900 font-mono">{t('Selected:', 'Ausgewählt:')} {maxRoomSize}</div>
                 <div className="flex gap-4 w-full mt-4">
                   <button
-                    className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-700 transition-all w-full text-lg"
+                    className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
                     onClick={handleConfirmCreateRoom}
                   >
                     {t('Confirm & Create', 'Bestätigen & Erstellen')}
                   </button>
                   <button
-                    className="bg-gray-200 text-red-700 px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-gray-300 transition-all w-full text-lg"
+                    className="bg-slate-100 text-blue-900 px-6 py-3 rounded-lg font-semibold shadow hover:bg-slate-200 transition-all w-full text-base"
                     onClick={() => setCreatingRoom(false)}
                   >
                     {t('Cancel', 'Abbrechen')}
@@ -362,14 +362,14 @@ export default function Home() {
             {!creatingRoom && (
               <div className="w-full flex flex-col items-center">
                 <input
-                  className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg tracking-widest uppercase"
+                  className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-3 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none tracking-widest uppercase"
                   placeholder={t('Enter 5-letter room code...', 'Gib den 5-stelligen Raumcode ein...')}
                   value={input}
                   maxLength={5}
                   onChange={(e) => setInput(e.target.value.toUpperCase())}
                 />
                 <button
-                  className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-700 transition-all w-full text-lg"
+                  className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
                   onClick={handleJoin}
                   disabled={input.trim().length !== 5}
                 >
@@ -380,37 +380,37 @@ export default function Home() {
           </>
         ) : !wordSubmitted ? (
           <div className="w-full flex flex-col items-center">
-            <p className="mb-2 text-lg text-red-700 font-medium">
-              {t('Room:', 'Raum:')} <span className="font-mono text-red-500">{roomId}</span>
+            <p className="mb-2 text-base text-blue-900 font-semibold">
+              {t('Room:', 'Raum:')} <span className="font-mono text-blue-700">{roomId}</span>
             </p>
-            <p className="mb-1 text-red-700 font-semibold">
-              {t('Room size:', 'Raumgröße:')} <span className="font-mono text-red-700">{maxRoomSize}</span>
+            <p className="mb-1 text-blue-900 font-medium">
+              {t('Room size:', 'Raumgröße:')} <span className="font-mono text-blue-900">{maxRoomSize}</span>
             </p>
-            <p className="mb-1 text-red-700 font-semibold">
-              {t('Players joined:', 'Spieler beigetreten:')} <span className="font-mono text-red-700">{players.length}</span> / <span className="font-mono text-red-700">{maxRoomSize}</span>
+            <p className="mb-1 text-blue-900 font-medium">
+              {t('Players joined:', 'Spieler beigetreten:')} <span className="font-mono text-blue-900">{players.length}</span> / <span className="font-mono text-blue-900">{maxRoomSize}</span>
             </p>
             {players.length < 3 && (
-              <p className="mb-2 text-yellow-700 font-semibold bg-yellow-100 rounded px-2 py-1">
+              <p className="mb-2 text-blue-700 font-medium bg-blue-100 rounded px-2 py-1">
                 {t('Waiting for at least 3 players to join...', 'Warte auf mindestens 3 Spieler...')}
               </p>
             )}
             {players.length < maxRoomSize && players.length >= 3 && (
-              <p className="mb-2 text-yellow-700 font-semibold bg-yellow-100 rounded px-2 py-1">
+              <p className="mb-2 text-blue-700 font-medium bg-blue-100 rounded px-2 py-1">
                 {t('Waiting for more players or for the host to start...', 'Warte auf weitere Spieler oder den Host...')}
               </p>
             )}
-            <p className="mb-4 text-red-500 font-semibold">
+            <p className="mb-4 text-blue-700 font-medium">
               {connected && socketJoined ? t('Connected!', 'Verbunden!') : t('Connecting...', 'Verbinde...')}
             </p>
             <input
-              className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
+              className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-3 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none"
               placeholder={t('Enter your word...', 'Gib dein Wort ein...')}
               value={word}
               onChange={(e) => setWord(e.target.value)}
               disabled={!connected || !socketJoined}
             />
             <button
-              className="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-700 transition-all w-full text-lg"
+              className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
               onClick={handleWordSubmit}
               disabled={!word.trim() || !connected || !socketJoined}
             >
@@ -418,15 +418,15 @@ export default function Home() {
             </button>
           </div>
         ) : (!role && wordSubmitted) ? (
-          <div className="w-full flex flex-col items-center bg-gradient-to-br from-yellow-50 via-yellow-100 to-yellow-200 rounded-2xl shadow-lg p-6 border border-yellow-200 animate-fade-in-up">
+          <div className="w-full flex flex-col items-center bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-2xl shadow-lg p-6 border border-blue-200 animate-fade-in-up">
             <div className="flex flex-col items-center w-full">
-              <svg className="w-12 h-12 text-yellow-400 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <p className="text-2xl font-bold text-yellow-700 mb-1 tracking-tight drop-shadow">{t('Word submitted!', 'Wort abgeschickt!')}</p>
-              <p className="text-base text-yellow-900 font-semibold mb-4">
-                {t('You submitted:', 'Du hast eingereicht:')} <span className="font-mono text-yellow-900 bg-yellow-100 px-2 py-1 rounded shadow-inner">{word}</span>
+              <svg className="w-12 h-12 text-blue-400 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <p className="text-2xl font-bold text-blue-700 mb-1 tracking-tight drop-shadow">{t('Word submitted!', 'Wort abgeschickt!')}</p>
+              <p className="text-base text-blue-900 font-semibold mb-4">
+                {t('You submitted:', 'Du hast eingereicht:')} <span className="font-mono text-blue-900 bg-blue-100 px-2 py-1 rounded shadow-inner">{word}</span>
               </p>
               <button
-                className="mb-4 bg-yellow-200 hover:bg-yellow-300 text-yellow-900 border border-yellow-400 px-5 py-2 rounded-xl font-semibold shadow-md transition-all text-base focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                className="mb-4 bg-blue-200 hover:bg-blue-300 text-blue-900 border border-blue-400 px-5 py-2 rounded-xl font-semibold shadow-md transition-all text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
                 onClick={() => {
                   setWordSubmitted(false);
                   setRole(null);
@@ -448,19 +448,19 @@ export default function Home() {
           </div>
         ) : role ? (
           <div className="text-center">
-            <p className="mb-2 text-lg font-semibold text-red-700">{t('Your role:', 'Deine Rolle:')}</p>
+            <p className="mb-2 text-lg font-semibold text-blue-700">{t('Your role:', 'Deine Rolle:')}</p>
             <p
               className={
                 role === "traitor"
-                  ? "text-red-700 text-3xl font-extrabold drop-shadow-sm"
-                  : "text-green-600 text-3xl font-extrabold drop-shadow-sm"
+                  ? "text-blue-700 text-3xl font-extrabold drop-shadow-sm"
+                  : "text-blue-900 text-3xl font-extrabold drop-shadow-sm"
               }
             >
               {role === 'traitor' ? t('Traitor', 'Verräter') : t('Friend', 'Freund')}
             </p>
             {role === 'friend' && gameWord && (
-              <p className="mt-4 text-lg text-red-700 font-medium">
-                {t('The word is:', 'Das Wort ist:')} <span className="font-mono text-red-600 bg-red-100 px-2 py-1 rounded-lg shadow-inner">{gameWord}</span>
+              <p className="mt-4 text-lg text-blue-700 font-medium">
+                {t('The word is:', 'Das Wort ist:')} <span className="font-mono text-blue-900 bg-blue-100 px-2 py-1 rounded-lg shadow-inner">{gameWord}</span>
               </p>
             )}
             {role === 'traitor' && (
@@ -471,27 +471,27 @@ export default function Home() {
           </div>
         ) : (
           <div className="text-center">
-            <p className="mb-2 text-lg text-red-700 font-medium">
+            <p className="mb-2 text-lg text-blue-700 font-medium">
               {t('Waiting for other players to submit their words...', 'Warte auf die anderen Spieler...')}
             </p>
           </div>
         )}
         {role && cluePhase && !voting && !results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Clue Phase', 'Hinweisrunde')}</h2>
-            <p className="mb-2 text-red-500 font-medium">
+            <h2 className="text-2xl font-bold mb-3 text-blue-700">{t('Clue Phase', 'Hinweisrunde')}</h2>
+            <p className="mb-2 text-blue-500 font-medium">
               {t('Turn', 'Runde')} {clueTurn + 1} {t('of', 'von')} {totalPlayers}
             </p>
             {isMyTurn ? (
               <div>
                 <input
-                  className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 placeholder:text-red-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
+                  className="border-2 border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-blue-900 placeholder:text-blue-400 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
                   placeholder={t('Enter your clue...', 'Gib deinen Hinweis ein...')}
                   value={clue}
                   onChange={(e) => setClue(e.target.value)}
                 />
                 <button
-                  className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-700 transition-all w-full text-lg"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-blue-700 transition-all w-full text-lg"
                   onClick={handleClueSubmit}
                   disabled={!clue.trim()}
                 >
@@ -507,12 +507,12 @@ export default function Home() {
         )}
         {allClues.length > 0 && !results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('All Clues', 'Alle Hinweise')}</h2>
+            <h2 className="text-2xl font-bold mb-3 text-blue-700">{t('All Clues', 'Alle Hinweise')}</h2>
             <ul className="mb-2">
               {allClues.map((c, i) => (
                 <li
                   key={i}
-                  className="mb-1 text-lg text-red-800 bg-red-100 rounded-lg px-3 py-1 shadow-inner"
+                  className="mb-1 text-lg text-blue-800 bg-blue-100 rounded-lg px-3 py-1 shadow-inner"
                 >
                   {c}
                 </li>
@@ -522,12 +522,12 @@ export default function Home() {
         )}
         {voting && !results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Voting Phase', 'Abstimmungsrunde')}</h2>
-            <p className="mb-2 text-red-500 font-medium">
+            <h2 className="text-2xl font-bold mb-3 text-blue-700">{t('Voting Phase', 'Abstimmungsrunde')}</h2>
+            <p className="mb-2 text-blue-500 font-medium">
               {t('Vote for the suspected traitor:', 'Stimme für den vermuteten Verräter:')}
             </p>
             <select
-              className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-red-900 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
+              className="border-2 border-blue-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 rounded-xl px-4 py-3 mb-3 w-full bg-white text-blue-900 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg"
               value={vote}
               onChange={(e) => setVote(e.target.value)}
             >
@@ -540,7 +540,7 @@ export default function Home() {
               ))}
             </select>
             <button
-              className="bg-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-800 transition-all w-full text-lg"
+              className="bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-blue-800 transition-all w-full text-lg"
               onClick={handleVote}
               disabled={!vote}
             >
@@ -550,18 +550,18 @@ export default function Home() {
         )}
         {results && (
           <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Results', 'Ergebnisse')}</h2>
+            <h2 className="text-2xl font-bold mb-3 text-blue-700">{t('Results', 'Ergebnisse')}</h2>
             <ul className="mb-2">
               {Object.entries(results.voteCounts).map(([id, count], i) => (
                 <li
                   key={i}
-                  className="mb-1 text-lg text-red-800 bg-red-100 rounded-lg px-3 py-1 shadow-inner"
+                  className="mb-1 text-lg text-blue-800 bg-blue-100 rounded-lg px-3 py-1 shadow-inner"
                 >
                   {id}: {String(count)} {t('vote(s)', 'Stimme(n)')}
                 </li>
               ))}
             </ul>
-            <p className="mt-2 font-bold text-red-700">{t('Game Over!', 'Spiel vorbei!')}</p>
+            <p className="mt-2 font-bold text-blue-700">{t('Game Over!', 'Spiel vorbei!')}</p>
           </div>
         )}
         {joined && (
@@ -572,26 +572,26 @@ export default function Home() {
               {notifications.filter(n => n.message && n.message.trim()).map((notif) => (
                 <div
                   key={notif.id}
-                  className="bg-yellow-100 border border-yellow-400 text-yellow-900 px-6 py-3 rounded-xl shadow-lg font-semibold text-base animate-fade-in-up transition-all"
+                  className="bg-blue-100 border border-blue-400 text-blue-900 px-6 py-3 rounded-xl shadow-lg font-semibold text-base animate-fade-in-up transition-all"
                   style={{ minWidth: 220, maxWidth: 320 }}
                 >
                   {notif.message}
                 </div>
               ))}
             </div>
-            <p className="text-base text-red-700 font-semibold mb-1">
-              {t('Your nickname:', 'Dein Spitzname:')} <span className="font-mono text-red-800">{nickname}</span>
+            <p className="text-base text-blue-700 font-semibold mb-1">
+              {t('Your nickname:', 'Dein Spitzname:')} <span className="font-mono text-blue-800">{nickname}</span>
             </p>
-            <div className="w-full bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
+            <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2">
               <div className="flex flex-wrap items-center justify-between mb-1">
-                <p className="text-sm text-red-700 font-bold">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
-                <span className="text-xs text-red-500 font-mono">{players.length} / {maxRoomSize}</span>
+                <p className="text-sm text-blue-700 font-bold">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
+                <span className="text-xs text-blue-500 font-mono">{players.length} / {maxRoomSize}</span>
               </div>
               <ul className="flex flex-wrap gap-2">
                 {players.map((p, i) => (
                   <li
                     key={i}
-                    className={`px-2 py-1 bg-white rounded shadow text-red-700 font-mono text-sm border-2 transition-all ${p === nickname ? 'border-red-500' : 'border-transparent'}`}
+                    className={`px-2 py-1 bg-white rounded shadow text-blue-700 font-mono text-sm border-2 transition-all ${p === nickname ? 'border-blue-500' : 'border-transparent'}`}
                   >
                     {p}
                   </li>
@@ -602,7 +602,7 @@ export default function Home() {
         )}
         {joined && (
           <button
-            className="mt-4 bg-white text-red-700 border-2 border-red-400 px-4 py-2 rounded-xl font-semibold shadow hover:bg-red-100 transition-all text-base"
+            className="mt-4 bg-white text-blue-700 border-2 border-blue-400 px-4 py-2 rounded-xl font-semibold shadow hover:bg-blue-100 transition-all text-base"
             onClick={handleLeaveRoom}
           >
             {t('Leave Room', 'Raum verlassen')}
