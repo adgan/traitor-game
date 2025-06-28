@@ -27,8 +27,9 @@ export default function Home() {
   };
 
   // Handler for admin to start the game
+  const MIN_PLAYERS = 3;
   const handleStartGame = () => {
-    if (!isAdmin() || players.length < maxRoomSize) return;
+    if (!isAdmin() || players.length < MIN_PLAYERS) return;
     setStartLocked(true); // lock word input for all
     if (socket && roomId && playerId) {
       socket.emit('startGame', { roomId, adminId: playerId });
@@ -227,9 +228,34 @@ export default function Home() {
     if (!socket) return;
     const onRoomError = (data: { error: string }) => {
       setError(data.error);
-      setJoined(false);
-      setRoomId("");
-      setInput("");
+      // Only reset joined state if the error is not a reconnect race ("Room is full" but player is in the list)
+      setTimeout(() => {
+        setJoined((prev) => {
+          // If the player is not in the players list, force leave UI
+          if (!players.some(p => p.playerId === playerId)) {
+            setRoomId("");
+            setInput("");
+            setWord("");
+            setWordSubmitted(false);
+            setRole(null);
+            setGameWord(null);
+            setIsMyTurn(false);
+            setClue("");
+            setCluePhase(false);
+            setClueTurn(0);
+            setTotalPlayers(0);
+            setVoting(false);
+            setAllClues([]);
+            setVote("");
+            setResults(null);
+            localStorage.removeItem("roomId");
+            localStorage.removeItem("nickname");
+            setPlayers([]);
+            return false;
+          }
+          return prev;
+        });
+      }, 500);
     };
     const onLeftRoom = () => {
       // Call the same logic as handleLeaveRoom, but do not emit leaveRoom again
@@ -251,6 +277,7 @@ export default function Home() {
       setResults(null);
       localStorage.removeItem("roomId");
       localStorage.removeItem("nickname");
+      setPlayers([]);
     };
     socket.on("roomError", onRoomError);
     socket.on("leftRoom", onLeftRoom);
@@ -258,7 +285,7 @@ export default function Home() {
       socket.off("roomError", onRoomError);
       socket.off("leftRoom", onLeftRoom);
     };
-  }, [socket]);
+  }, [socket, players, playerId]);
 
   const handleClueSubmit = () => {
     if (socket && clue.trim()) {
@@ -417,6 +444,31 @@ export default function Home() {
             setInput={setInput}
             handleJoin={handleJoin}
           />
+        ) : !startLocked ? (
+          // Waiting for admin to start the game
+          <div className="w-full flex flex-col items-center animate-fade-in-up mt-6">
+            <div className="text-lg font-semibold mb-2 text-blue-900 text-center">
+              {t('Waiting for the host to start the game...', 'Warte darauf, dass der Host das Spiel startet...')}
+            </div>
+            <div className="mb-2 text-blue-800 text-base font-medium text-center">
+              {t('Players in room:', 'Spieler im Raum:')} {players.length} / {maxRoomSize}
+            </div>
+            <div className="mb-2 text-blue-700 text-base text-center">
+              <span className="font-semibold">{t('Room Code:', 'Raumcode:')}</span> <span className="font-mono tracking-widest px-2 py-1 rounded bg-blue-100 text-blue-900 border border-blue-300">{roomId}</span>
+            </div>
+            <div className="mb-2 text-blue-700 text-base text-center">
+              <span className="font-semibold">{t('Your Nickname:', 'Dein Spitzname:')}</span> <span className="font-mono px-2 py-1 rounded bg-blue-50 text-blue-900 border border-blue-200">{nickname}</span>
+            </div>
+            {isAdmin() && (
+            <button
+              className="mt-4 bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
+              onClick={handleStartGame}
+              disabled={players.length < MIN_PLAYERS || startLocked}
+            >
+              {t('Start Game', 'Spiel starten')}
+            </button>
+            )}
+          </div>
         ) : !wordSubmitted ? (
           <WordEntrySection
             darkMode={darkMode}

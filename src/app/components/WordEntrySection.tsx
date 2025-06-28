@@ -90,7 +90,7 @@ export default function WordEntrySection({
         <button
           className="mt-4 bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
           onClick={handleStartGame}
-          disabled={players.length < maxRoomSize || startLocked}
+          disabled={players.length < 3 || startLocked}
         >
           {t("Start Game", "Spiel starten")}
         </button>

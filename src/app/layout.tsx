@@ -35,10 +35,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.png" type="image/x-icon" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-hidden`}
-        style={{ minHeight: '100dvh', margin: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ minHeight: '100dvh', margin: 0, display: 'flex', flexDirection: 'column', overflow: 'auto' }}
       >
-        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
           {children}
         </div>
         <div

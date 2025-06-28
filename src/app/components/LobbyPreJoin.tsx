@@ -1,3 +1,4 @@
+import React, { useEffect, useRef } from "react";
 interface LobbyPreJoinProps {
   darkMode: boolean;
   language: 'en' | 'de';
@@ -6,6 +7,7 @@ interface LobbyPreJoinProps {
   nickname: string;
   setNickname: (v: string) => void;
   error: string;
+  setError?: (v: string) => void; // Optional, for error clearing
   handleStartCreateRoom: () => void;
   creatingRoom: boolean;
   maxRoomSize: number;
@@ -25,6 +27,7 @@ export default function LobbyPreJoin({
   nickname,
   setNickname,
   error,
+  setError,
   handleStartCreateRoom,
   creatingRoom,
   maxRoomSize,
@@ -35,6 +38,29 @@ export default function LobbyPreJoin({
   setInput,
   handleJoin,
 }: LobbyPreJoinProps) {
+  // Auto-clear error after 5 seconds
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const prevErrorRef = useRef<string>("");
+
+  useEffect(() => {
+    if (error) {
+      // Only set timeout if error just appeared
+      if (prevErrorRef.current !== error) {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          if (setError) setError("");
+        }, 5000);
+      }
+    } else {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    }
+    prevErrorRef.current = error;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
+
   return (
     <>
       <div className="w-full flex justify-end mb-4">
@@ -66,8 +92,18 @@ export default function LobbyPreJoin({
         </div>
       </div>
       {error && (
-        <div className="w-full mb-3 text-center text-red-700 bg-red-100 rounded-lg px-3 py-2 font-medium border border-red-200">
-          {error}
+        <div className="w-full mb-3 text-center text-red-700 bg-red-100 rounded-lg px-3 py-2 font-medium border border-red-200 flex items-center justify-center gap-2">
+          <span>{error}</span>
+          {setError && (
+            <button
+              type="button"
+              aria-label="Close error"
+              className="ml-2 text-red-700 hover:text-red-900 text-lg font-bold px-2 rounded focus:outline-none focus:ring-2 focus:ring-red-300"
+              onClick={() => setError("")}
+            >
+              ×
+            </button>
+          )}
         </div>
       )}
       <input

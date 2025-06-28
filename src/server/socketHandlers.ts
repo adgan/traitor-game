@@ -112,25 +112,31 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
       return;
     }
     const room = roomWords[roomId];
-    if (room.players.length >= room.maxRoomSize) {
+    // Always allow join if playerId is already in the room (even if room is full or inactive)
+    let player = room.players.find(p => p.playerId === playerId);
+    if (player) {
+      // Reconnect: update socketId and mark active
+      socket.join(roomId);
+      player.socketId = socket.id;
+      player.inactive = false;
+      player.nickname = nickname; // allow nickname change on reconnect
+      // Always emit joined for reconnects
+      socket.emit('joined', roomId);
+      emitPlayers(roomId);
+      return;
+    }
+    // Remove any previously inactive/kicked player with this playerId (if present)
+    room.players = room.players.filter(p => p.playerId !== playerId);
+    // Only block new players if the number of active players is at or above maxRoomSize
+    if (room.players.filter(p => !p.inactive).length >= room.maxRoomSize) {
       socket.emit('roomError', { error: 'Room is full.' });
       return;
     }
     socket.join(roomId);
-    let player = room.players.find(p => p.playerId === playerId);
-    if (player) {
-      // Reconnect: update socketId and mark active
-      player.socketId = socket.id;
-      player.inactive = false;
-      player.nickname = nickname; // allow nickname change on reconnect
-    } else {
-      // Remove any previously inactive/kicked player with this playerId (if present)
-      room.players = room.players.filter(p => p.playerId !== playerId);
-      // New player
-      player = { playerId, nickname, socketId: socket.id, inactive: false };
-      room.players.push(player);
-      emitNotification(roomId, `${nickname} joined the room.`);
-    }
+    // New player
+    player = { playerId, nickname, socketId: socket.id, inactive: false };
+    room.players.push(player);
+    emitNotification(roomId, `${nickname} joined the room.`);
     // If no admin, assign this player as admin
     if (!room.adminId) {
       room.adminId = playerId;
@@ -152,6 +158,12 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
         maxRoomSize: maxRoomSize || 6,
         adminId: playerId
       };
+    } else {
+      // If room already exists, do not overwrite maxRoomSize
+      if (typeof maxRoomSize === 'number' && roomWords[roomId].maxRoomSize !== maxRoomSize) {
+        // Optionally, you could emit a warning here if client tries to change maxRoomSize
+        // socket.emit('notification', { message: 'Room already exists. maxRoomSize cannot be changed.' });
+      }
     }
     const room = roomWords[roomId];
     socket.join(roomId);
