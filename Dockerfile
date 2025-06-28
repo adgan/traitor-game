@@ -13,6 +13,7 @@ LABEL version=${BUILD_NUMBER:-dev}
 ENV NODE_ENV=production
 ENV NEXT_PUBLIC_BUILD_NUMBER=${BUILD_NUMBER:-dev}
 
+
 # Copy built app and node_modules from build artifacts
 COPY .next ./.next
 COPY node_modules ./node_modules
@@ -22,6 +23,9 @@ COPY next.config.* ./
 COPY postcss.config.* ./
 COPY tailwind.config.* ./
 COPY src ./src
+
+# Fix permissions for node_modules and .next
+RUN chmod -R 755 node_modules/.bin && chmod -R 755 .next && chmod -R 755 node_modules
 
 # Expose port 3000
 EXPOSE 3000
