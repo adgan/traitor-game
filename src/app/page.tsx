@@ -39,6 +39,8 @@ export default function Home() {
   const [lang, setLang] = useState("en");
   // Notification system
   const [notifications, setNotifications] = useState<{ id: number; message: string }[]>([]);
+  // Show/hide submitted word toggle
+  const [showSubmittedWord, setShowSubmittedWord] = useState(false);
   // Show notifications as snackbars that disappear after 3s
   useEffect(() => {
     if (!socket) return;
@@ -586,13 +588,29 @@ export default function Home() {
                 (darkMode ? 'text-blue-200' : 'text-blue-700')
               }>{t('Word submitted!', 'Wort abgeschickt!')}</p>
               <p className={
-                'text-base font-semibold mb-4 ' +
+                'text-base font-semibold mb-4 flex items-center gap-2 ' +
                 (darkMode ? 'text-blue-100' : 'text-blue-900')
               }>
-                {t('You submitted:', 'Du hast eingereicht:')} <span className={
-                  'font-mono px-2 py-1 rounded shadow-inner ' +
+                {t('You submitted:', 'Du hast eingereicht:')}
+                <span className={
+                  'font-mono px-2 py-1 rounded shadow-inner select-all ' +
                   (darkMode ? 'text-blue-100 bg-blue-900' : 'text-blue-900 bg-blue-100')
-                }>{word}</span>
+                }>
+                  {showSubmittedWord ? word : '••••••••••••••••'.slice(0, word.length)}
+                </span>
+                <button
+                  type="button"
+                  aria-label={showSubmittedWord ? t('Hide word', 'Wort verbergen') : t('Show word', 'Wort anzeigen')}
+                  className={
+                    'ml-2 px-2 py-1 rounded border text-xs font-semibold transition ' +
+                    (darkMode
+                      ? 'bg-blue-950 border-blue-700 text-blue-200 hover:bg-blue-900'
+                      : 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200')
+                  }
+                  onClick={() => setShowSubmittedWord(w => !w)}
+                >
+                  {showSubmittedWord ? t('Hide', 'Verbergen') : t('Show', 'Anzeigen')}
+                </button>
               </p>
               <button
                 className={
@@ -605,6 +623,7 @@ export default function Home() {
                   setWordSubmitted(false);
                   setRole(null);
                   setGameWord(null);
+                  setShowSubmittedWord(false);
                   if (socket && roomId && nickname) {
                     socket.emit('cancelWord', { roomId, nickname });
                   }
