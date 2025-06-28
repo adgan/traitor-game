@@ -28,6 +28,7 @@ export default function Home() {
   const [allClues, setAllClues] = useState<string[]>([]);
   const [vote, setVote] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
+  const [pendingRoomCode, setPendingRoomCode] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [maxRoomSize, setMaxRoomSize] = useState(6);
   const [error, setError] = useState("");
@@ -68,7 +69,15 @@ export default function Home() {
   // Generate a 5-digit room code
   const generateRoomCode = () => nanoid(5).toUpperCase();
 
-  const handleCreateRoom = () => {
+  // Step 1: Start room creation (show options)
+  const handleStartCreateRoom = () => {
+    setCreatingRoom(true);
+    setPendingRoomCode("");
+    setError("");
+  };
+
+  // Step 2: Confirm and create room
+  const handleConfirmCreateRoom = () => {
     if (!nickname.trim()) {
       setError("Please enter a nickname.");
       return;
@@ -80,6 +89,7 @@ export default function Home() {
     setCreatingRoom(false);
     setJoined(true);
     setError("");
+    setPendingRoomCode("");
     if (socket) {
       socket.emit("createRoom", { roomId: code, maxRoomSize, nickname });
     }
@@ -311,31 +321,41 @@ export default function Home() {
             <div className="flex flex-col gap-2 w-full mb-4">
               <button
                 className="bg-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-800 transition-all w-full text-lg"
-                onClick={handleCreateRoom}
+                onClick={handleStartCreateRoom}
               >
                 {t('Create Room', 'Raum erstellen')}
               </button>
             </div>
-            <br></br>
-            {creatingRoom && roomCode && (
-              <div className="w-full flex flex-col items-center">
-                <label className="mb-2 text-red-700 font-semibold">{t('Max Room Size', 'Maximale Raumgröße')}</label>
-                <input
-                  type="number"
-                  min={3}
-                  max={12}
-                  className="border-2 border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-200 rounded-xl px-4 py-2 mb-3 w-32 bg-white text-red-900 text-lg font-semibold transition-all outline-none shadow focus:shadow-lg text-center"
-                  value={maxRoomSize}
-                  onChange={e => setMaxRoomSize(Number(e.target.value))}
-                />
-                <div className="text-center mt-2">
-                  <p className="text-lg text-red-700 font-bold">{t('Room Code:', 'Raumcode:')}</p>
-                  <p className="text-3xl font-mono text-red-800 tracking-widest bg-red-100 rounded-lg px-4 py-2 shadow-inner select-all">
-                    {roomCode}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    {t('Share this code with friends to join!', 'Teile diesen Code mit Freunden!')}
-                  </p>
+            {creatingRoom && (
+              <div className="w-full flex flex-col items-center animate-fade-in-up">
+                <h2 className="text-2xl font-bold mb-3 text-red-700">{t('Room Settings', 'Raumeinstellungen')}</h2>
+                <label className="mb-2 text-red-700 font-semibold">{t('Max Players', 'Maximale Spielerzahl')}</label>
+                <div className="flex items-center gap-4 mb-4 w-full">
+                  <span className="text-red-700 font-bold">3</span>
+                  <input
+                    type="range"
+                    min={3}
+                    max={15}
+                    value={maxRoomSize}
+                    onChange={e => setMaxRoomSize(Number(e.target.value))}
+                    className="w-full accent-red-500"
+                  />
+                  <span className="text-red-700 font-bold">15</span>
+                </div>
+                <div className="mb-2 text-lg text-red-800 font-mono">{t('Selected:', 'Ausgewählt:')} {maxRoomSize}</div>
+                <div className="flex gap-4 w-full mt-4">
+                  <button
+                    className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-red-700 transition-all w-full text-lg"
+                    onClick={handleConfirmCreateRoom}
+                  >
+                    {t('Confirm & Create', 'Bestätigen & Erstellen')}
+                  </button>
+                  <button
+                    className="bg-gray-200 text-red-700 px-6 py-3 rounded-xl font-semibold shadow-md hover:bg-gray-300 transition-all w-full text-lg"
+                    onClick={() => setCreatingRoom(false)}
+                  >
+                    {t('Cancel', 'Abbrechen')}
+                  </button>
                 </div>
               </div>
             )}
@@ -363,6 +383,22 @@ export default function Home() {
             <p className="mb-2 text-lg text-red-700 font-medium">
               {t('Room:', 'Raum:')} <span className="font-mono text-red-500">{roomId}</span>
             </p>
+            <p className="mb-1 text-red-700 font-semibold">
+              {t('Room size:', 'Raumgröße:')} <span className="font-mono text-red-700">{maxRoomSize}</span>
+            </p>
+            <p className="mb-1 text-red-700 font-semibold">
+              {t('Players joined:', 'Spieler beigetreten:')} <span className="font-mono text-red-700">{players.length}</span> / <span className="font-mono text-red-700">{maxRoomSize}</span>
+            </p>
+            {players.length < 3 && (
+              <p className="mb-2 text-yellow-700 font-semibold bg-yellow-100 rounded px-2 py-1">
+                {t('Waiting for at least 3 players to join...', 'Warte auf mindestens 3 Spieler...')}
+              </p>
+            )}
+            {players.length < maxRoomSize && players.length >= 3 && (
+              <p className="mb-2 text-yellow-700 font-semibold bg-yellow-100 rounded px-2 py-1">
+                {t('Waiting for more players or for the host to start...', 'Warte auf weitere Spieler oder den Host...')}
+              </p>
+            )}
             <p className="mb-4 text-red-500 font-semibold">
               {connected && socketJoined ? t('Connected!', 'Verbunden!') : t('Connecting...', 'Verbinde...')}
             </p>
@@ -518,7 +554,10 @@ export default function Home() {
               {t('Your nickname:', 'Dein Spitzname:')} <span className="font-mono text-red-800">{nickname}</span>
             </p>
             <div className="w-full bg-red-50 border border-red-200 rounded-lg p-2 mb-2">
-              <p className="text-sm text-red-700 font-bold mb-1">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
+              <div className="flex flex-wrap items-center justify-between mb-1">
+                <p className="text-sm text-red-700 font-bold">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
+                <span className="text-xs text-red-500 font-mono">{players.length} / {maxRoomSize}</span>
+              </div>
               <ul className="flex flex-wrap gap-2">
                 {players.map((p, i) => (
                   <li
