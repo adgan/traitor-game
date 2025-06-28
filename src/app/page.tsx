@@ -213,6 +213,35 @@ export default function Home() {
     socket.on("votingPhase", onVotingPhase);
     socket.on("results", onResults);
     socket.on("players", onPlayers);
+    // Listen for roomClosed event from server
+    socket.on("roomClosed", (data: { message: string }) => {
+      setNotifications((prev) => [
+        ...prev,
+        { id: Date.now() + Math.random(), message: data.message }
+      ]);
+      // Optionally, force leave UI state
+      setTimeout(() => {
+        setJoined(false);
+        setRoomId("");
+        setInput("");
+        setWord("");
+        setWordSubmitted(false);
+        setRole(null);
+        setGameWord(null);
+        setIsMyTurn(false);
+        setClue("");
+        setCluePhase(false);
+        setClueTurn(0);
+        setTotalPlayers(0);
+        setVoting(false);
+        setAllClues([]);
+        setVote("");
+        setResults(null);
+        localStorage.removeItem("roomId");
+        localStorage.removeItem("nickname");
+        setPlayers([]);
+      }, 2000);
+    });
     return () => {
       socket.off("role", onRole);
       socket.off("yourTurn", onYourTurn);
@@ -221,6 +250,7 @@ export default function Home() {
       socket.off("votingPhase", onVotingPhase);
       socket.off("results", onResults);
       socket.off("players", onPlayers);
+      socket.off("roomClosed");
     };
   }, [socket, playerId]);
 
