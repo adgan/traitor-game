@@ -39,8 +39,6 @@ export default function Home() {
   const [lang, setLang] = useState("en");
   // Notification system
   const [notifications, setNotifications] = useState<{ id: number; message: string }[]>([]);
-  // Show/hide submitted word toggle
-  const [showSubmittedWord, setShowSubmittedWord] = useState(false);
   // Show notifications as snackbars that disappear after 3s
   useEffect(() => {
     if (!socket) return;
@@ -314,89 +312,50 @@ export default function Home() {
             : 'bg-white/95 border-slate-200')
         }
       >
-        <h1 className="text-3xl font-bold mb-4 text-blue-800 tracking-tight font-sans drop-shadow-sm">
-          Traitor Party Game
-        </h1>
-        {/* Help link in top-right corner, translated */}
-        <div className="absolute top-6 right-6 flex gap-2 items-center">
-          {/* Dark mode toggle */}
-          <button
-            aria-label={darkMode ? t('Switch to light mode', 'Wechsel zu hell') : t('Switch to dark mode', 'Wechsel zu dunkel')}
-            className={
-              'rounded-full p-2 border transition-colors ' +
-              (darkMode
-                ? 'bg-slate-800 border-slate-700 text-blue-200 hover:bg-slate-700'
-                : 'bg-slate-100 border-slate-200 text-blue-700 hover:bg-slate-200')
-            }
-            onClick={() => setDarkMode((d) => !d)}
-            title={darkMode ? t('Switch to light mode', 'Wechsel zu hell') : t('Switch to dark mode', 'Wechsel zu dunkel')}
-            type="button"
-          >
-            {darkMode ? (
-              // Sun icon
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m16.95 7.07l-1.41-1.41M6.34 6.34L4.93 4.93m12.02 0l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>
-            ) : (
-              // Moon icon
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
-            )}
-          </button>
-          <Link
-            href="/help"
-            className={
-              (darkMode
-                ? 'text-blue-300 hover:text-blue-100'
-                : 'text-blue-600 hover:text-blue-800') +
-              ' hover:underline font-medium transition-colors'
-            }
-            onClick={handleHelpClick}
-          >
-            {helpLabel}
-          </Link>
+        {/* Header with title and controls, fully responsive and visually separated */}
+        <div className="relative w-full mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-2">
+            <h1 className="text-3xl font-bold text-blue-800 tracking-tight font-sans drop-shadow-sm text-center sm:text-left w-full">
+              Traitor Party Game
+            </h1>
+            {/* Controls: always top right on desktop, below title on mobile */}
+            <div className="flex gap-2 items-center justify-center sm:justify-end mt-3 sm:mt-0 w-full sm:w-auto">
+              <button
+                aria-label={darkMode ? t('Switch to light mode', 'Wechsel zu hell') : t('Switch to dark mode', 'Wechsel zu dunkel')}
+                className={
+                  'rounded-full p-2 border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 ' +
+                  (darkMode
+                    ? 'bg-slate-800 border-slate-700 text-blue-200 hover:bg-slate-700'
+                    : 'bg-slate-100 border-slate-200 text-blue-700 hover:bg-slate-200')
+                }
+                onClick={() => setDarkMode((d) => !d)}
+                title={darkMode ? t('Switch to light mode', 'Wechsel zu hell') : t('Switch to dark mode', 'Wechsel zu dunkel')}
+                type="button"
+              >
+                {darkMode ? (
+                  // Sun icon
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m16.95 7.07l-1.41-1.41M6.34 6.34L4.93 4.93m12.02 0l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>
+                ) : (
+                  // Moon icon
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
+                )}
+              </button>
+              <Link
+                href="/help"
+                className={
+                  (darkMode
+                    ? 'text-blue-300 hover:text-blue-100'
+                    : 'text-blue-600 hover:text-blue-800') +
+                  ' hover:underline font-medium transition-colors px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-blue-300'
+                }
+                onClick={handleHelpClick}
+              >
+                {helpLabel}
+              </Link>
+            </div>
+          </div>
         </div>
         {/* All content below: add dark mode support by toggling text and bg classes where needed */}
-        {/* Room metadata bar: always visible when joined */}
-        {joined && (
-          <div className="flex flex-col items-center mb-2 w-full">
-            <span className={
-              'block text-base font-semibold mb-1 ' +
-              (darkMode ? 'text-blue-200' : 'text-blue-900')
-            }>
-              {t('Room', 'Raum')}
-            </span>
-            <div className="flex flex-row items-center justify-between gap-2 w-full">
-              {/* Connection status left */}
-              <span className={
-                'text-sm font-medium px-2 py-1 rounded ' +
-                (connected && socketJoined
-                  ? (darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800')
-                  : (darkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'))
-              } style={{ minWidth: 90, textAlign: 'center' }}>
-                {connected && socketJoined ? t('Connected', 'Verbunden') : t('Connecting...', 'Verbinde...')}
-              </span>
-              {/* Room code center */}
-              <span
-                className={
-                  'inline-block font-mono tracking-widest text-lg px-3 py-1 rounded-lg border shadow transition ' +
-                  (darkMode
-                    ? 'bg-blue-800 text-blue-50 border-blue-400 shadow-blue-900'
-                    : 'bg-blue-100 text-blue-800 border-blue-400 shadow-blue-200')
-                }
-                style={{ letterSpacing: '0.15em', fontWeight: 700, minWidth: 110, textAlign: 'center' }}
-              >
-                {roomId}
-              </span>
-              {/* Players right */}
-              <span className={
-                'text-sm font-medium px-2 py-1 rounded ' +
-                (darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-800')
-              } style={{ minWidth: 90, textAlign: 'center' }}>
-                {t('Players', 'Spieler')}: <span className={darkMode ? 'font-mono text-blue-100' : 'font-mono text-blue-900'}>{players.length}</span>/<span className={darkMode ? 'font-mono text-blue-100' : 'font-mono text-blue-900'}>{maxRoomSize}</span>
-              </span>
-            </div>
-            {/* Add extra margin below the metadata row */}
-            <div style={{ marginBottom: '2.5rem' }} />
-          </div>
-        )}
         {!joined ? (
           <>
             <div className="w-full flex justify-end mb-4">
@@ -524,8 +483,39 @@ export default function Home() {
           </>
         ) : !wordSubmitted ? (
           <div className="w-full flex flex-col items-center">
-            {/* Add extra margin below room metadata row */}
-            <div style={{ marginBottom: '1.5rem' }} />
+            <div className={
+              'flex flex-col items-center mb-2'
+            }>
+              <span className={
+                'block text-base font-semibold mb-1 ' +
+                (darkMode ? 'text-blue-200' : 'text-blue-900')
+              }>
+                {t('Room', 'Raum')}
+              </span>
+              <span
+                className={
+                  'inline-block font-mono tracking-widest text-lg px-3 py-1 rounded-lg border shadow transition ' +
+                  (darkMode
+                    ? 'bg-blue-800 text-blue-50 border-blue-400 shadow-blue-900'
+                    : 'bg-blue-100 text-blue-800 border-blue-400 shadow-blue-200')
+                }
+                style={{ letterSpacing: '0.15em', fontWeight: 700 }}
+              >
+                {roomId}
+              </span>
+            </div>
+            <p className={
+              'mb-1 font-medium ' +
+              (darkMode ? 'text-blue-100' : 'text-blue-900')
+            }>
+              {t('Room size:', 'Raumgröße:')} <span className={darkMode ? 'font-mono text-blue-200' : 'font-mono text-blue-900'}>{maxRoomSize}</span>
+            </p>
+            <p className={
+              'mb-1 font-medium ' +
+              (darkMode ? 'text-blue-100' : 'text-blue-900')
+            }>
+              {t('Players joined:', 'Spieler beigetreten:')} <span className={darkMode ? 'font-mono text-blue-200' : 'font-mono text-blue-900'}>{players.length}</span> / <span className={darkMode ? 'font-mono text-blue-200' : 'font-mono text-blue-900'}>{maxRoomSize}</span>
+            </p>
             {players.length < 3 && (
               <p className={
                 'mb-2 font-medium rounded px-2 py-1 border transition-colors ' +
@@ -588,29 +578,13 @@ export default function Home() {
                 (darkMode ? 'text-blue-200' : 'text-blue-700')
               }>{t('Word submitted!', 'Wort abgeschickt!')}</p>
               <p className={
-                'text-base font-semibold mb-4 flex items-center gap-2 ' +
+                'text-base font-semibold mb-4 ' +
                 (darkMode ? 'text-blue-100' : 'text-blue-900')
               }>
-                {t('You submitted:', 'Du hast eingereicht:')}
-                <span className={
-                  'font-mono px-2 py-1 rounded shadow-inner select-all ' +
+                {t('You submitted:', 'Du hast eingereicht:')} <span className={
+                  'font-mono px-2 py-1 rounded shadow-inner ' +
                   (darkMode ? 'text-blue-100 bg-blue-900' : 'text-blue-900 bg-blue-100')
-                }>
-                  {showSubmittedWord ? word : '••••••••••••••••'.slice(0, word.length)}
-                </span>
-                <button
-                  type="button"
-                  aria-label={showSubmittedWord ? t('Hide word', 'Wort verbergen') : t('Show word', 'Wort anzeigen')}
-                  className={
-                    'ml-2 px-2 py-1 rounded border text-xs font-semibold transition ' +
-                    (darkMode
-                      ? 'bg-blue-950 border-blue-700 text-blue-200 hover:bg-blue-900'
-                      : 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200')
-                  }
-                  onClick={() => setShowSubmittedWord(w => !w)}
-                >
-                  {showSubmittedWord ? t('Hide', 'Verbergen') : t('Show', 'Anzeigen')}
-                </button>
+                }>{word}</span>
               </p>
               <button
                 className={
@@ -623,7 +597,6 @@ export default function Home() {
                   setWordSubmitted(false);
                   setRole(null);
                   setGameWord(null);
-                  setShowSubmittedWord(false);
                   if (socket && roomId && nickname) {
                     socket.emit('cancelWord', { roomId, nickname });
                   }
