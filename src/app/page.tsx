@@ -3,16 +3,18 @@
 
 import { useSocket } from "./useSocket";
 import { useEffect, useState } from "react";
+
 import { nanoid } from "nanoid";
 import Link from "next/link";
 
 export default function Home() {
+  // Dark mode state
+  const [darkMode, setDarkMode] = useState(false);
+
   const [roomId, setRoomId] = useState("");
   const [nickname, setNickname] = useState("");
-
   const [results, setResults] = useState<Results | null>(null);
   const { socket, connected, joined: socketJoined } = useSocket(roomId, nickname);
-
   const [input, setInput] = useState("");
   const [joined, setJoined] = useState(false);
   const [word, setWord] = useState("");
@@ -35,7 +37,6 @@ export default function Home() {
   const [language, setLanguage] = useState<'en' | 'de'>('en');
   const [players, setPlayers] = useState<string[]>([]);
   const [lang, setLang] = useState("en");
-
   // Notification system
   const [notifications, setNotifications] = useState<{ id: number; message: string }[]>([]);
   // Show notifications as snackbars that disappear after 3s
@@ -283,16 +284,74 @@ export default function Home() {
     localStorage.setItem("language", language);
   };
 
+  // Persist dark mode preference (must be inside component)
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem("darkMode") : null;
+    if (stored === "true") setDarkMode(true);
+  }, []);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("darkMode", darkMode ? "true" : "false");
+    }
+  }, [darkMode]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-0 bg-gradient-to-br from-blue-50 via-slate-100 to-blue-100">
-      <div className="relative bg-white/95 rounded-2xl shadow-xl px-10 py-12 max-w-lg w-full flex flex-col items-center border border-slate-200 my-8 mx-2 md:mx-0">
+    <main
+      className={
+        `flex min-h-screen flex-col items-center justify-center p-0 transition-colors duration-300 ` +
+        (darkMode
+          ? 'bg-gradient-to-br from-blue-950 via-slate-900 to-blue-900'
+          : 'bg-gradient-to-br from-blue-50 via-slate-100 to-blue-100')
+      }
+    >
+      <div
+        className={
+          `relative rounded-2xl shadow-xl px-10 py-12 max-w-lg w-full flex flex-col items-center border my-8 mx-2 md:mx-0 transition-colors duration-300 ` +
+          (darkMode
+            ? 'bg-slate-900/95 border-slate-700'
+            : 'bg-white/95 border-slate-200')
+        }
+      >
         <h1 className="text-3xl font-bold mb-4 text-blue-800 tracking-tight font-sans drop-shadow-sm">
           Traitor Party Game
         </h1>
         {/* Help link in top-right corner, translated */}
-        <div className="absolute top-6 right-6">
-          <Link href="/help" className="text-blue-600 hover:underline font-medium transition-colors" onClick={handleHelpClick}>{helpLabel}</Link>
+        <div className="absolute top-6 right-6 flex gap-2 items-center">
+          {/* Dark mode toggle */}
+          <button
+            aria-label={darkMode ? t('Switch to light mode', 'Wechsel zu hell') : t('Switch to dark mode', 'Wechsel zu dunkel')}
+            className={
+              'rounded-full p-2 border transition-colors ' +
+              (darkMode
+                ? 'bg-slate-800 border-slate-700 text-blue-200 hover:bg-slate-700'
+                : 'bg-slate-100 border-slate-200 text-blue-700 hover:bg-slate-200')
+            }
+            onClick={() => setDarkMode((d) => !d)}
+            title={darkMode ? t('Switch to light mode', 'Wechsel zu hell') : t('Switch to dark mode', 'Wechsel zu dunkel')}
+            type="button"
+          >
+            {darkMode ? (
+              // Sun icon
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 1v2m0 18v2m11-11h-2M3 12H1m16.95 7.07l-1.41-1.41M6.34 6.34L4.93 4.93m12.02 0l-1.41 1.41M6.34 17.66l-1.41 1.41"/></svg>
+            ) : (
+              // Moon icon
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"/></svg>
+            )}
+          </button>
+          <Link
+            href="/help"
+            className={
+              (darkMode
+                ? 'text-blue-300 hover:text-blue-100'
+                : 'text-blue-600 hover:text-blue-800') +
+              ' hover:underline font-medium transition-colors'
+            }
+            onClick={handleHelpClick}
+          >
+            {helpLabel}
+          </Link>
         </div>
+        {/* All content below: add dark mode support by toggling text and bg classes where needed */}
         {!joined ? (
           <>
             <div className="w-full flex justify-end mb-4">
@@ -307,11 +366,20 @@ export default function Home() {
               </select>
             </div>
             <div className="w-full mb-6">
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-base text-center font-medium">
-                <span className="block text-lg font-bold mb-2">{t('Welcome to Traitor Party Game!', 'Willkommen beim Traitor Party Game!')}</span>
+              <div className={
+                'mb-4 p-4 rounded-xl text-base text-center font-medium border ' +
+                (darkMode
+                  ? 'bg-blue-950 border-blue-900 text-blue-100'
+                  : 'bg-blue-50 border-blue-200 text-blue-900')
+              }>
+                <span className={
+                  'block text-lg font-bold mb-2 ' + (darkMode ? 'text-blue-100' : 'text-blue-900')
+                }>{t('Welcome to Traitor Party Game!', 'Willkommen beim Traitor Party Game!')}</span>
                 <span className="block mb-1">{t('To get started, enter your nickname below.', 'Gib zuerst deinen Spitznamen ein.')}</span>
                 <span className="block mb-1">{t('You can create a new room or join an existing one.', 'Erstelle einen neuen Raum oder trete einem bestehenden bei.')}</span>
-                <span className="block text-blue-700 mt-2">{t('Tip: Share your room code with friends to play together!', 'Tipp: Teile deinen Raumcode mit Freunden!')}</span>
+                <span className={
+                  'block mt-2 ' + (darkMode ? 'text-blue-300' : 'text-blue-700')
+                }>{t('Tip: Share your room code with friends to play together!', 'Tipp: Teile deinen Raumcode mit Freunden!')}</span>
               </div>
             </div>
             {error && (
@@ -320,7 +388,12 @@ export default function Home() {
               </div>
             )}
             <input
-              className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-4 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none"
+              className={
+                'border focus:ring-2 rounded-lg px-4 py-3 mb-4 w-full text-base font-medium transition outline-none ' +
+                (darkMode
+                  ? 'border-slate-700 focus:border-blue-700 focus:ring-blue-900 bg-slate-800 text-blue-100 placeholder:text-slate-400'
+                  : 'border-slate-300 focus:border-blue-400 focus:ring-blue-100 bg-slate-50 text-blue-900 placeholder:text-slate-400')
+              }
               placeholder={t('Enter your nickname...', 'Gib deinen Spitznamen ein...')}
               value={nickname}
               maxLength={16}
@@ -328,7 +401,12 @@ export default function Home() {
             />
             <div className="flex flex-col gap-2 w-full mb-6">
               <button
-                className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
+                className={
+                  'px-6 py-3 rounded-lg font-semibold shadow transition-all w-full text-base ' +
+                  (darkMode
+                    ? 'bg-blue-800 text-blue-100 hover:bg-blue-900'
+                    : 'bg-blue-700 text-white hover:bg-blue-800')
+                }
                 onClick={handleStartCreateRoom}
               >
                 {t('Create Room', 'Raum erstellen')}
@@ -373,14 +451,24 @@ export default function Home() {
                   {t('Already have a room code?', 'Hast du schon einen Raumcode?')}
                 </div>
                 <input
-                  className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-3 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none tracking-widest uppercase"
+                  className={
+                    'border focus:ring-2 rounded-lg px-4 py-3 mb-3 w-full text-base font-medium transition outline-none tracking-widest uppercase ' +
+                    (darkMode
+                      ? 'border-slate-700 focus:border-blue-700 focus:ring-blue-900 bg-slate-800 text-blue-100 placeholder:text-slate-400'
+                      : 'border-slate-300 focus:border-blue-400 focus:ring-blue-100 bg-slate-50 text-blue-900 placeholder:text-slate-400')
+                  }
                   placeholder={t('Enter 5-letter room code...', 'Gib den 5-stelligen Raumcode ein...')}
                   value={input}
                   maxLength={5}
                   onChange={(e) => setInput(e.target.value.toUpperCase())}
                 />
                 <button
-                  className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
+                  className={
+                    'px-6 py-3 rounded-lg font-semibold shadow transition-all w-full text-base ' +
+                    (darkMode
+                      ? 'bg-blue-800 text-blue-100 hover:bg-blue-900'
+                      : 'bg-blue-700 text-white hover:bg-blue-800')
+                  }
                   onClick={handleJoin}
                   disabled={input.trim().length !== 5}
                 >
@@ -401,12 +489,22 @@ export default function Home() {
               {t('Players joined:', 'Spieler beigetreten:')} <span className="font-mono text-blue-900">{players.length}</span> / <span className="font-mono text-blue-900">{maxRoomSize}</span>
             </p>
             {players.length < 3 && (
-              <p className="mb-2 text-blue-700 font-medium bg-blue-100 rounded px-2 py-1">
+              <p className={
+                'mb-2 font-medium rounded px-2 py-1 border transition-colors ' +
+                (darkMode
+                  ? 'bg-blue-950 border-blue-900 text-blue-100'
+                  : 'bg-blue-100 border-blue-200 text-blue-700')
+              }>
                 {t('Waiting for at least 3 players to join...', 'Warte auf mindestens 3 Spieler...')}
               </p>
             )}
             {players.length < maxRoomSize && players.length >= 3 && (
-              <p className="mb-2 text-blue-700 font-medium bg-blue-100 rounded px-2 py-1">
+              <p className={
+                'mb-2 font-medium rounded px-2 py-1 border transition-colors ' +
+                (darkMode
+                  ? 'bg-blue-950 border-blue-900 text-blue-100'
+                  : 'bg-blue-100 border-blue-200 text-blue-700')
+              }>
                 {t('Waiting for more players or for the host to start...', 'Warte auf weitere Spieler oder den Host...')}
               </p>
             )}
@@ -414,14 +512,24 @@ export default function Home() {
               {connected && socketJoined ? t('Connected!', 'Verbunden!') : t('Connecting...', 'Verbinde...')}
             </p>
             <input
-              className="border border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded-lg px-4 py-3 mb-3 w-full bg-slate-50 text-blue-900 placeholder:text-slate-400 text-base font-medium transition outline-none"
+              className={
+                'border focus:ring-2 rounded-lg px-4 py-3 mb-3 w-full text-base font-medium transition outline-none ' +
+                (darkMode
+                  ? 'border-slate-700 focus:border-blue-700 focus:ring-blue-900 bg-slate-800 text-blue-100 placeholder:text-slate-400'
+                  : 'border-slate-300 focus:border-blue-400 focus:ring-blue-100 bg-slate-50 text-blue-900 placeholder:text-slate-400')
+              }
               placeholder={t('Enter your word...', 'Gib dein Wort ein...')}
               value={word}
               onChange={(e) => setWord(e.target.value)}
               disabled={!connected || !socketJoined}
             />
             <button
-              className="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow hover:bg-blue-800 transition-all w-full text-base"
+              className={
+                'px-6 py-3 rounded-lg font-semibold shadow transition-all w-full text-base ' +
+                (darkMode
+                  ? 'bg-blue-800 text-blue-100 hover:bg-blue-900'
+                  : 'bg-blue-700 text-white hover:bg-blue-800')
+              }
               onClick={handleWordSubmit}
               disabled={!word.trim() || !connected || !socketJoined}
             >
@@ -429,15 +537,34 @@ export default function Home() {
             </button>
           </div>
         ) : (!role && wordSubmitted) ? (
-          <div className="w-full flex flex-col items-center bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-2xl shadow-lg p-6 border border-blue-200 animate-fade-in-up">
+          <div className={
+            'w-full flex flex-col items-center rounded-2xl shadow-lg p-6 border animate-fade-in-up ' +
+            (darkMode
+              ? 'bg-gradient-to-br from-blue-950 via-slate-900 to-blue-900 border-blue-900'
+              : 'bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 border-blue-200')
+          }>
             <div className="flex flex-col items-center w-full">
               <svg className="w-12 h-12 text-blue-400 mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <p className="text-2xl font-bold text-blue-700 mb-1 tracking-tight drop-shadow">{t('Word submitted!', 'Wort abgeschickt!')}</p>
-              <p className="text-base text-blue-900 font-semibold mb-4">
-                {t('You submitted:', 'Du hast eingereicht:')} <span className="font-mono text-blue-900 bg-blue-100 px-2 py-1 rounded shadow-inner">{word}</span>
+              <p className={
+                'text-2xl font-bold mb-1 tracking-tight drop-shadow ' +
+                (darkMode ? 'text-blue-200' : 'text-blue-700')
+              }>{t('Word submitted!', 'Wort abgeschickt!')}</p>
+              <p className={
+                'text-base font-semibold mb-4 ' +
+                (darkMode ? 'text-blue-100' : 'text-blue-900')
+              }>
+                {t('You submitted:', 'Du hast eingereicht:')} <span className={
+                  'font-mono px-2 py-1 rounded shadow-inner ' +
+                  (darkMode ? 'text-blue-100 bg-blue-900' : 'text-blue-900 bg-blue-100')
+                }>{word}</span>
               </p>
               <button
-                className="mb-4 bg-blue-200 hover:bg-blue-300 text-blue-900 border border-blue-400 px-5 py-2 rounded-xl font-semibold shadow-md transition-all text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className={
+                  'mb-4 border px-5 py-2 rounded-xl font-semibold shadow-md transition-all text-base focus:outline-none focus:ring-2 ' +
+                  (darkMode
+                    ? 'bg-blue-900 hover:bg-blue-800 text-blue-100 border-blue-700 focus:ring-blue-900'
+                    : 'bg-blue-200 hover:bg-blue-300 text-blue-900 border-blue-400 focus:ring-blue-400')
+                }
                 onClick={() => {
                   setWordSubmitted(false);
                   setRole(null);
@@ -560,19 +687,31 @@ export default function Home() {
           </div>
         )}
         {results && (
-          <div className="w-full text-center mt-6">
-            <h2 className="text-2xl font-bold mb-3 text-blue-700">{t('Results', 'Ergebnisse')}</h2>
+          <div className={
+            'w-full text-center mt-6 ' +
+            (darkMode ? 'text-blue-50' : 'text-blue-700')
+          }>
+            <h2 className={
+              'text-2xl font-bold mb-3 ' +
+              (darkMode ? 'text-blue-100' : 'text-blue-700')
+            }>{t('Results', 'Ergebnisse')}</h2>
             <ul className="mb-2">
               {Object.entries(results.voteCounts).map(([id, count], i) => (
                 <li
                   key={i}
-                  className="mb-1 text-lg text-blue-800 bg-blue-100 rounded-lg px-3 py-1 shadow-inner"
+                  className={
+                    'mb-1 text-lg rounded-lg px-3 py-1 shadow-inner ' +
+                    (darkMode ? 'bg-blue-800 text-blue-50' : 'bg-blue-100 text-blue-800')
+                  }
                 >
                   {id}: {String(count)} {t('vote(s)', 'Stimme(n)')}
                 </li>
               ))}
             </ul>
-            <p className="mt-2 font-bold text-blue-700">{t('Game Over!', 'Spiel vorbei!')}</p>
+            <p className={
+              'mt-2 font-bold ' +
+              (darkMode ? 'text-blue-200' : 'text-blue-700')
+            }>{t('Game Over!', 'Spiel vorbei!')}</p>
           </div>
         )}
         {joined && (
@@ -593,16 +732,30 @@ export default function Home() {
             <p className="text-base text-blue-700 font-semibold mb-1">
               {t('Your nickname:', 'Dein Spitzname:')} <span className="font-mono text-blue-800">{nickname}</span>
             </p>
-            <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-2 mb-2">
+            <div className={
+              'w-full rounded-lg p-2 mb-2 border ' +
+              (darkMode ? 'bg-blue-950 border-blue-900' : 'bg-blue-50 border-blue-200')
+            }>
               <div className="flex flex-wrap items-center justify-between mb-1">
-                <p className="text-sm text-blue-700 font-bold">{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
-                <span className="text-xs text-blue-500 font-mono">{players.length} / {maxRoomSize}</span>
+                <p className={
+                  'text-sm font-bold ' +
+                  (darkMode ? 'text-blue-200' : 'text-blue-700')
+                }>{t('Players in this room:', 'Spieler in diesem Raum:')}</p>
+                <span className={
+                  'text-xs font-mono ' +
+                  (darkMode ? 'text-blue-300' : 'text-blue-500')
+                }>{players.length} / {maxRoomSize}</span>
               </div>
               <ul className="flex flex-wrap gap-2">
                 {players.map((p, i) => (
                   <li
                     key={i}
-                    className={`px-2 py-1 bg-white rounded shadow text-blue-700 font-mono text-sm border-2 transition-all ${p === nickname ? 'border-blue-500' : 'border-transparent'}`}
+                    className={
+                      'px-2 py-1 rounded shadow font-mono text-sm border-2 transition-all ' +
+                      (darkMode
+                        ? `bg-blue-900 text-blue-100 ${p === nickname ? 'border-blue-400' : 'border-transparent'}`
+                        : `bg-white text-blue-700 ${p === nickname ? 'border-blue-500' : 'border-transparent'}`)
+                    }
                   >
                     {p}
                   </li>
