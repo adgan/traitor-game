@@ -1,7 +1,9 @@
 
 # Secure Dockerfile for Next.js (with Socket.IO API route)
 # Use official Node.js LTS image
-ARG BUILD_NUMBER=dev
+
+# Set BUILD_NUMBER to GitHub Actions run number and sha if available, else 'dev'
+ARG BUILD_NUMBER
 FROM node:20-alpine AS deps
 
 # Set working directory
@@ -16,20 +18,22 @@ COPY . .
 
 
 # Build Next.js app (including serverless API routes)
-ENV NEXT_PUBLIC_BUILD_NUMBER=$BUILD_NUMBER
+# Use BUILD_NUMBER if set, else fallback to 'dev'
+ENV NEXT_PUBLIC_BUILD_NUMBER=${BUILD_NUMBER:-dev}
 RUN npm run build
 
 # Production image, copy only necessary files
 
+
 FROM node:20-alpine AS runner
 WORKDIR /app
-ARG BUILD_NUMBER=dev
-LABEL version=$BUILD_NUMBER
+ARG BUILD_NUMBER
+LABEL version=${BUILD_NUMBER:-dev}
 
 
 # Set NODE_ENV to production for security
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_BUILD_NUMBER=$BUILD_NUMBER
+ENV NEXT_PUBLIC_BUILD_NUMBER=${BUILD_NUMBER:-dev}
 
 # Copy built app and node_modules from previous stage
 COPY --from=deps /app/node_modules ./node_modules
