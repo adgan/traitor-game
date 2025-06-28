@@ -3,6 +3,7 @@ export interface RoomPlayer {
   nickname: string;
   socketId: string;
   inactive: boolean;
+  admin?: boolean;
 }
 
 export interface Room {
@@ -13,4 +14,6 @@ export interface Room {
   cluePhase: boolean;
   votes: Record<string, string>;
   maxRoomSize: number;
+  // Optionally store adminId for quick lookup
+  adminId?: string;
 }

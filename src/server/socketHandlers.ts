@@ -4,12 +4,17 @@ import type { RoomPlayer } from './types/Room';
 
 
 export function registerSocketHandlers(io: Server, socket: Socket) {
-  // Helper to emit player list to all in room
+  // Helper to emit player list to all in room, with admin info
   function emitPlayers(roomId: string) {
     const room = roomWords[roomId];
     if (!room) return;
-    // Send array of { playerId, nickname, inactive }
-    const players = room.players.map(p => ({ playerId: p.playerId, nickname: p.nickname, inactive: p.inactive }));
+    // Send array of { playerId, nickname, inactive, admin }
+    const players = room.players.map(p => ({
+      playerId: p.playerId,
+      nickname: p.nickname,
+      inactive: p.inactive,
+      admin: room.adminId === p.playerId
+    }));
     io.to(roomId).emit('players', { players });
   }
 
@@ -42,6 +47,10 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
       room.players.push(player);
       emitNotification(roomId, `${nickname} joined the room.`);
     }
+    // If no admin, assign this player as admin
+    if (!room.adminId) {
+      room.adminId = playerId;
+    }
     socket.emit('joined', roomId);
     emitPlayers(roomId);
   });
@@ -49,7 +58,16 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
   // Create room
   socket.on('createRoom', ({ roomId, maxRoomSize, nickname, playerId }) => {
     if (!roomWords[roomId]) {
-      roomWords[roomId] = { words: [], players: [], clues: [], clueTurn: 0, cluePhase: false, votes: {}, maxRoomSize: maxRoomSize || 6 };
+      roomWords[roomId] = {
+        words: [],
+        players: [],
+        clues: [],
+        clueTurn: 0,
+        cluePhase: false,
+        votes: {},
+        maxRoomSize: maxRoomSize || 6,
+        adminId: playerId
+      };
     }
     const room = roomWords[roomId];
     socket.join(roomId);
@@ -62,6 +80,10 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
       player = { playerId, nickname, socketId: socket.id, inactive: false };
       room.players.push(player);
       emitNotification(roomId, `${nickname} created the room.`);
+    }
+    // Always ensure adminId is set
+    if (!room.adminId) {
+      room.adminId = playerId;
     }
     socket.emit('joined', roomId);
     emitPlayers(roomId);
@@ -141,6 +163,16 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     const player = room.players.find(p => p.playerId === playerId);
     if (player) {
       player.inactive = true;
+      // If admin left, reassign admin to next active player
+      if (room.adminId === playerId) {
+        const nextActive = room.players.find(p => !p.inactive && p.playerId !== playerId);
+        if (nextActive) {
+          room.adminId = nextActive.playerId;
+          emitNotification(roomId, `${nextActive.nickname} is now the admin.`);
+        } else {
+          room.adminId = undefined;
+        }
+      }
       emitPlayers(roomId);
       emitNotification(roomId, `${player.nickname} left the room.`);
     }
@@ -156,6 +188,16 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
       const player = room.players.find(p => p.socketId === socket.id);
       if (player) {
         player.inactive = true;
+        // If admin disconnected, reassign admin
+        if (room.adminId === player.playerId) {
+          const nextActive = room.players.find(p => !p.inactive && p.playerId !== player.playerId);
+          if (nextActive) {
+            room.adminId = nextActive.playerId;
+            emitNotification(roomId, `${nextActive.nickname} is now the admin.`);
+          } else {
+            room.adminId = undefined;
+          }
+        }
         emitPlayers(roomId);
       }
     });

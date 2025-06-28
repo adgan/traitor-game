@@ -45,7 +45,7 @@ export default function Home() {
   const [maxRoomSize, setMaxRoomSize] = useState(6);
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<'en' | 'de'>('en');
-  type Player = { playerId: string; nickname: string; inactive?: boolean };
+  type Player = { playerId: string; nickname: string; inactive?: boolean; admin?: boolean };
   const [players, setPlayers] = useState<Player[]>([]);
   const [lang, setLang] = useState("en");
   // Notification system
@@ -784,8 +784,8 @@ export default function Home() {
                 }>{players.length} / {maxRoomSize}</span>
               </div>
               <ul className="flex flex-wrap gap-2">
-                {players.map((p, i) => {
-                  const isMe = p.nickname === nickname;
+                {players.map((p) => {
+                  const isMe = p.playerId === playerId;
                   const base = darkMode
                     ? 'bg-blue-900 text-blue-100'
                     : 'bg-white text-blue-700';
@@ -799,11 +799,17 @@ export default function Home() {
                     : '';
                   return (
                     <li
-                      key={i}
-                      className={`px-2 py-1 rounded shadow font-mono text-sm border-2 transition-all ${base} ${border} ${inactive}`}
+                      key={p.playerId}
+                      className={`px-2 py-1 rounded shadow font-mono text-sm border-2 transition-all flex items-center gap-1 ${base} ${border} ${inactive}`}
                       title={p.inactive ? t('Inactive', 'Inaktiv') : ''}
                     >
-                      {p.nickname}
+                      <span>{p.nickname}</span>
+                      {p.admin === true && (
+                        <span title={t('Admin', 'Admin')} className="ml-1 align-middle inline-block">
+                          {/* Crown icon */}
+                          <svg className="inline w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3l2.39 4.84 5.36.78-3.88 3.78.92 5.36L10 14.77l-4.79 2.52.92-5.36-3.88-3.78 5.36-.78z"/></svg>
+                        </span>
+                      )}
                     </li>
                   );
                 })}
