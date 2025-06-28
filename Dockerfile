@@ -19,6 +19,7 @@ COPY . .
 
 # Build Next.js app (including serverless API routes)
 # Use BUILD_NUMBER if set, else fallback to 'dev'
+ARG BUILD_NUMBER
 ENV NEXT_PUBLIC_BUILD_NUMBER=${BUILD_NUMBER:-dev}
 RUN npm run build
 
