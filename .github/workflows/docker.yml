@@ -27,6 +27,8 @@ jobs:
         run: npm ci
       - name: Build Next.js app
         run: npm run build
+      - name: List files for debug
+        run: ls -al . && ls -al .next
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
