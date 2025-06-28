@@ -56,9 +56,30 @@ jobs:
           REDEPLOY_WEBHOOK: ${{ secrets.REDEPLOY_WEBHOOK }}
         run: |
           if [ -n "$REDEPLOY_WEBHOOK" ]; then
-            curl -X POST "$REDEPLOY_WEBHOOK"
-            echo "Redeploy webhook triggered successfully."
-            exit 0
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$REDEPLOY_WEBHOOK")
+            BODY=$(echo "$RESPONSE" | head -n -1)
+            STATUS=$(echo "$RESPONSE" | tail -n1)
+            echo "Redeploy webhook response: $BODY"
+            if echo "$BODY" | grep -q 'Error updating service'; then
+              echo "[ERROR] Container update failed: $BODY" >&2
+              exit 2
+            fi
+            if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+              echo "Redeploy webhook triggered successfully."
+              # Check if the service is reachable after redeploy
+              sleep 5
+              HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://traitor.reiqu.de/")
+              if [ "$HEALTH_STATUS" -eq 200 ]; then
+                echo "Service is reachable (HTTP 200)."
+                exit 0
+              else
+                echo "[ERROR] Service is not reachable after redeploy (HTTP $HEALTH_STATUS)" >&2
+                exit 3
+              fi
+            else
+              echo "[ERROR] Redeploy webhook failed with status $STATUS" >&2
+              exit 1
+            fi
           else
             echo "No redeploy webhook set."
             exit 1
