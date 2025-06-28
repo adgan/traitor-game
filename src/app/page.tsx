@@ -479,39 +479,44 @@ export default function Home() {
           </>
         ) : !wordSubmitted ? (
           <div className="w-full flex flex-col items-center">
-            <div className={
-              'flex flex-col items-center mb-2'
-            }>
+            <div className="flex flex-col items-center mb-2 w-full">
               <span className={
                 'block text-base font-semibold mb-1 ' +
                 (darkMode ? 'text-blue-200' : 'text-blue-900')
               }>
                 {t('Room', 'Raum')}
               </span>
-              <span
-                className={
-                  'inline-block font-mono tracking-widest text-lg px-3 py-1 rounded-lg border shadow transition ' +
-                  (darkMode
-                    ? 'bg-blue-800 text-blue-50 border-blue-400 shadow-blue-900'
-                    : 'bg-blue-100 text-blue-800 border-blue-400 shadow-blue-200')
-                }
-                style={{ letterSpacing: '0.15em', fontWeight: 700 }}
-              >
-                {roomId}
-              </span>
+              <div className="flex flex-row items-center justify-between gap-2 w-full">
+                {/* Connection status left */}
+                <span className={
+                  'text-sm font-medium px-2 py-1 rounded ' +
+                  (connected && socketJoined
+                    ? (darkMode ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-800')
+                    : (darkMode ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'))
+                } style={{ minWidth: 90, textAlign: 'center' }}>
+                  {connected && socketJoined ? t('Connected', 'Verbunden') : t('Connecting...', 'Verbinde...')}
+                </span>
+                {/* Room code center */}
+                <span
+                  className={
+                    'inline-block font-mono tracking-widest text-lg px-3 py-1 rounded-lg border shadow transition ' +
+                    (darkMode
+                      ? 'bg-blue-800 text-blue-50 border-blue-400 shadow-blue-900'
+                      : 'bg-blue-100 text-blue-800 border-blue-400 shadow-blue-200')
+                  }
+                  style={{ letterSpacing: '0.15em', fontWeight: 700, minWidth: 110, textAlign: 'center' }}
+                >
+                  {roomId}
+                </span>
+                {/* Players right */}
+                <span className={
+                  'text-sm font-medium px-2 py-1 rounded ' +
+                  (darkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-50 text-blue-800')
+                } style={{ minWidth: 90, textAlign: 'center' }}>
+                  {t('Players', 'Spieler')}: <span className={darkMode ? 'font-mono text-blue-100' : 'font-mono text-blue-900'}>{players.length}</span>/<span className={darkMode ? 'font-mono text-blue-100' : 'font-mono text-blue-900'}>{maxRoomSize}</span>
+                </span>
+              </div>
             </div>
-            <p className={
-              'mb-1 font-medium ' +
-              (darkMode ? 'text-blue-100' : 'text-blue-900')
-            }>
-              {t('Room size:', 'Raumgröße:')} <span className={darkMode ? 'font-mono text-blue-200' : 'font-mono text-blue-900'}>{maxRoomSize}</span>
-            </p>
-            <p className={
-              'mb-1 font-medium ' +
-              (darkMode ? 'text-blue-100' : 'text-blue-900')
-            }>
-              {t('Players joined:', 'Spieler beigetreten:')} <span className={darkMode ? 'font-mono text-blue-200' : 'font-mono text-blue-900'}>{players.length}</span> / <span className={darkMode ? 'font-mono text-blue-200' : 'font-mono text-blue-900'}>{maxRoomSize}</span>
-            </p>
             {players.length < 3 && (
               <p className={
                 'mb-2 font-medium rounded px-2 py-1 border transition-colors ' +
