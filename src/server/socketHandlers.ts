@@ -8,6 +8,11 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     io.to(roomId).emit('players', { players: getPlayers(roomId) });
   }
 
+  // Helper to emit a notification to all in room
+  function emitNotification(roomId: string, message: string) {
+    io.to(roomId).emit('notification', { message });
+  }
+
   // Join room
   socket.on('join', ({ roomId, nickname }) => {
     if (!roomWords[roomId]) {
@@ -22,6 +27,7 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     if (!roomWords[roomId].sockets.includes(socket.id)) {
       roomWords[roomId].sockets.push(socket.id);
       roomWords[roomId].nicknames[socket.id] = nickname;
+      emitNotification(roomId, `${nickname} joined the room.`);
     }
     socket.emit('joined', roomId);
     emitPlayers(roomId);
@@ -36,6 +42,7 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     if (!roomWords[roomId].sockets.includes(socket.id)) {
       roomWords[roomId].sockets.push(socket.id);
       roomWords[roomId].nicknames[socket.id] = nickname;
+      emitNotification(roomId, `${nickname} created the room.`);
     }
     socket.emit('joined', roomId);
     emitPlayers(roomId);
@@ -45,7 +52,9 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
   socket.on('submitWord', ({ roomId, word }) => {
     if (!roomWords[roomId]) return;
     roomWords[roomId].words.push(word);
+    emitNotification(roomId, `${roomWords[roomId].nicknames[socket.id]} submitted a word.`);
     if (roomWords[roomId].words.length === roomWords[roomId].sockets.length && roomWords[roomId].words.length >= 3) {
+      emitNotification(roomId, `The game is starting!`);
       const chosenWord = roomWords[roomId].words[Math.floor(Math.random() * roomWords[roomId].words.length)];
       const traitorIdx = Math.floor(Math.random() * roomWords[roomId].sockets.length);
       roomWords[roomId].cluePhase = true;
@@ -101,12 +110,14 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     if (!roomWords[roomId]) return;
     const idx = roomWords[roomId].sockets.indexOf(socket.id);
     if (idx !== -1) {
+      const leftName = roomWords[roomId].nicknames[socket.id];
       roomWords[roomId].sockets.splice(idx, 1);
       roomWords[roomId].words.splice(idx, 1);
       if (roomWords[roomId].clues) roomWords[roomId].clues.splice(idx, 1);
       if (roomWords[roomId].votes) delete roomWords[roomId].votes[socket.id];
       if (roomWords[roomId].nicknames) delete roomWords[roomId].nicknames[socket.id];
       emitPlayers(roomId);
+      if (leftName) emitNotification(roomId, `${leftName} left the room.`);
     }
     socket.leave(roomId);
     socket.emit('leftRoom', roomId);
@@ -117,12 +128,14 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     Object.keys(roomWords).forEach(roomId => {
       const idx = roomWords[roomId].sockets.indexOf(socket.id);
       if (idx !== -1) {
+        const leftName = roomWords[roomId].nicknames[socket.id];
         roomWords[roomId].sockets.splice(idx, 1);
         roomWords[roomId].words.splice(idx, 1);
         if (roomWords[roomId].clues) roomWords[roomId].clues.splice(idx, 1);
         if (roomWords[roomId].votes) delete roomWords[roomId].votes[socket.id];
         if (roomWords[roomId].nicknames) delete roomWords[roomId].nicknames[socket.id];
         emitPlayers(roomId);
+        if (leftName) emitNotification(roomId, `${leftName} left the room.`);
       }
     });
   });

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useSocket } from "./useSocket";
@@ -7,6 +8,11 @@ import Link from "next/link";
 
 export default function Home() {
   const [roomId, setRoomId] = useState("");
+  const [nickname, setNickname] = useState("");
+
+  const [results, setResults] = useState<Results | null>(null);
+  const { socket, connected, joined: socketJoined } = useSocket(roomId, nickname);
+
   const [input, setInput] = useState("");
   const [joined, setJoined] = useState(false);
   const [word, setWord] = useState("");
@@ -23,12 +29,31 @@ export default function Home() {
   const [vote, setVote] = useState("");
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [roomCode, setRoomCode] = useState("");
-  const [nickname, setNickname] = useState("");
   const [maxRoomSize, setMaxRoomSize] = useState(6);
   const [error, setError] = useState("");
   const [language, setLanguage] = useState<'en' | 'de'>('en');
   const [players, setPlayers] = useState<string[]>([]);
   const [lang, setLang] = useState("en");
+
+  // Notification system
+  const [notifications, setNotifications] = useState<{ id: number; message: string }[]>([]);
+  // Show notifications as snackbars that disappear after 3s
+  useEffect(() => {
+    if (!socket) return;
+    let notifId = 0;
+    const onNotification = (data: { message: string }) => {
+      notifId = notifId + 1;
+      const id = Date.now() + Math.random();
+      setNotifications((prev) => [...prev, { id, message: data.message }]);
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 3000);
+    };
+    socket.on('notification', onNotification);
+    return () => {
+      socket.off('notification', onNotification);
+    };
+  }, [socket]);
 
   // Simple translation dictionary
   const t = (en: string, de: string) => (language === 'de' ? de : en);
@@ -38,8 +63,7 @@ export default function Home() {
     votes: Record<string, string>;
     voteCounts: Record<string, number>;
   }
-  const [results, setResults] = useState<Results | null>(null);
-  const { socket, connected, joined: socketJoined } = useSocket(roomId, nickname);
+
 
   // Generate a 5-digit room code
   const generateRoomCode = () => nanoid(5).toUpperCase();
@@ -477,6 +501,19 @@ export default function Home() {
         )}
         {joined && (
           <div className="w-full flex flex-col items-center mb-4">
+            {/* Notification area */}
+            {/* Snackbar notifications */}
+            <div className="fixed bottom-6 left-1/2 z-50 flex flex-col items-center space-y-2" style={{ transform: 'translateX(-50%)' }}>
+              {notifications.filter(n => n.message && n.message.trim()).map((notif) => (
+                <div
+                  key={notif.id}
+                  className="bg-yellow-100 border border-yellow-400 text-yellow-900 px-6 py-3 rounded-xl shadow-lg font-semibold text-base animate-fade-in-up transition-all"
+                  style={{ minWidth: 220, maxWidth: 320 }}
+                >
+                  {notif.message}
+                </div>
+              ))}
+            </div>
             <p className="text-base text-red-700 font-semibold mb-1">
               {t('Your nickname:', 'Dein Spitzname:')} <span className="font-mono text-red-800">{nickname}</span>
             </p>
